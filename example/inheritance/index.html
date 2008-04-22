@@ -1,0 +1,20 @@
+{%	extends "base.html" %}
+
+{% block title %}{% endblock %}
+ 
+{%	block header %}
+  <h2> pretty header </h2>
+  	{{ block.name }} 	{{ block.depth }} 
+  
+  
+
+  	
+{%	endblock header %}
+
+
+{%	block  content %}
+  	<h4>This document extends 'base' template and overwrite it's content block</h4>
+    <p>This is a document extending from "base.html" template, </p>
+	{{ block.super }} 
+
+{%	endblock content %}

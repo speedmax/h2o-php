@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <title>{% block title %}asdf asdf {{ page.title | upper | capitalize }} {% endblock %}</title>
+</head>   
+<body>     
+{%	block body	%}               
+	<a href="base.php"> To see the base template</a> | 
+	<a href="index.php"> To see the extended template</a> |
+	<a href="extended.php"> To see the template extends two levels down</a>
+	{% block header %}{% endblock %}
+
+    <div id="sidebar"> 
+    {%	block sidebar	%}
+        <ul> 
+        {% debug links %}
+        {% for title, url in links reversed %}
+            <li> <a href="{{ url }}">{{ title | title}}</a></li>
+        {% endfor %}
+        </ul>
+    {%	endblock	%}
+    </div>
+
+    <div id='content'>
+    {%	block content	%}
+		<p>This is the content block of base.html, which defined default layout block of the document and later on can be extended.
+		</p>
+		
+		<p>This promotes the idea of reuseable layouts, For those who is familiar with object oriented programming, this is particularly similar.</p>
+	
+	
+	
+	{% cache 10 timer %}
+	  	<h4>{% now %}</h4> 
+	  	
+	  	<p>{{ page.content }}</p>
+	  	
+	{% endcache %}
+
+	{%	endblock	%}
+    </div>
+    
+{%	endblock %}
+</body>
+</html>

@@ -1,0 +1,168 @@
+/*
+Design by Free CSS Templates
+http://www.freecsstemplates.org
+Released for free under a Creative Commons Attribution 2.5 License
+*/
+
+body {
+	margin: 40px 0 0 0;
+	padding: 0;
+	background: #B2D22A url(images/img1.gif) repeat-x;
+	font: normal small "Trebuchet MS", Arial, Helvetica, sans-serif;
+	color: #688000;
+}
+
+form {
+	margin: 0;
+	padding: 0;
+}
+
+h1, h2, h3 {
+	margin: 0;
+	padding: 0;
+	text-transform: lowercase;
+	color: #617703;
+}
+
+a {
+	color: #688000;
+}
+
+a:hover {
+	text-decoration: none;
+}
+
+p, ul, ol, blockquote {
+	text-align: justify;
+}
+
+
+/* Header */
+
+#header {
+	width: 480px;
+	height: 130px;
+	margin: 0 auto;
+	background: url(images/img2.gif);
+}
+
+#logo {
+	float: left;
+	padding: 25px 0 0 30px;
+}
+
+#logo h1 {
+	letter-spacing: -4px;
+	font-size: 4em;
+}
+
+#logo h2 {
+	margin-top: -10px;
+	text-align: center;
+	font-size: 1em;
+}
+
+#logo a {
+	text-decoration: none;
+	color: #86A406;
+}
+
+#menu {
+	float: right;
+	padding: 20px 70px 0 0;
+}
+
+#menu ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+#menu li {
+	display: inline;
+}
+
+#menu a {
+	display: block;
+	width: 125px;
+	height: 20px;
+	padding-left: 10px;
+	margin-top:3px;
+	background: url(images/img4.gif) no-repeat left center;
+	border-top: 1px dotted #86A406;
+	text-transform: lowercase;
+	text-decoration: none;
+	color: #86A406;
+}
+
+#menu .first a {
+	border: none;
+}
+
+/* Content */
+
+#content {
+	width: 480px;
+	margin: 0 auto;
+	background: url(images/img3.gif) repeat-y;
+}
+
+/* Column One */
+
+#colOne {
+	margin: 0 15px;
+	background: url(images/img5.gif) repeat-x;
+}
+
+#colOne .post {
+	padding: 20px 30px 10px 30px;
+	border-bottom: 1px dotted #A8C54B;
+}
+
+#colOne .title {
+	letter-spacing: -2px;
+	font-size: 2em;
+}
+
+#colOne .posted {
+	font-size: x-small;
+}
+
+/* Column Two */
+
+#colTwo {
+	margin: 0 15px;
+	background: #E5FAA0 url(images/img6.gif) repeat-x;
+	padding:0.2em 1em;
+}
+
+
+
+#colTwo h2 {
+	font-size: 1.6em;
+}
+
+#colTwo ol.highlight {
+	color:white;
+    background:#333;
+    padding-left:25px;
+    font:12px Arial;
+}
+#colTwo ol.highlight li {
+    padding:0.2em;
+}
+
+/* Footer */
+
+#footer {
+	width: 480px;
+	margin: 0 auto;
+	background: url(images/img8.gif) no-repeat;
+}
+
+#footer p {
+	margin: 0;
+	padding: 20px 0;
+	text-align: center;
+	font-size: x-small;
+}
