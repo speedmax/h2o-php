@@ -4,8 +4,7 @@ class H2o_Parser {
     var $storage = array();
     protected $runtime;
     
-	function __construct($runtime, $source, $filename, $options) {
-	    $this->runtime = $runtime;
+	function __construct($source, $filename, $options) {
 		$this->options = $options;
 		$this->source = $source;
 		$this->first = true;

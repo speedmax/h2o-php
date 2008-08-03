@@ -10,6 +10,8 @@ require H2O_ROOT.'h2o/nodes.php';
 require H2O_ROOT.'h2o/tags.php';
 require H2O_ROOT.'h2o/errors.php';
 require H2O_ROOT.'h2o/filters.php';
+require H2O_ROOT.'h2o/context.php';
+
 
 $h2o = new H2o('./inherit.html');
 $context = array(
@@ -65,7 +67,7 @@ class H2o {
             require H2O_ROOT.'h2o/parser.php';
             
             $source = file_get_contents($filename);
-            $parser = new H2o_Parser($this, $source, $filename, $env);
+            $parser = new H2o_Parser($source, $filename, $env);
             $nodelist = $parser->parse();
 //            file_put_contents($cache, serialize($this->nodelist));
 //        }
@@ -82,10 +84,11 @@ class H2o {
         	'VARIABLE_END'		=>		'}}',
         	'COMMENT_START'		=>      '{*',
         	'COMMENT_END'		=>      '*}',
+        	'TRIM_TAGS'     => true
          ), $options);
     }
     
-    static function &createTag($tag, $args = null, $parser, $position = 0) {
+    static function createTag($tag, $args = null, $parser, $position = 0) {
         $tag = ucwords($tag);
         if (isset(self::$registeredTags[$tag])) {
             $tagClass = "{$tag}Tag";
@@ -134,169 +137,8 @@ class H2o {
     }
 }
 
-/**
- * Context object
- * 	encapsulate context, resolve name
- */
-class H2o_Context {
-    var $scopes = array();
-    var $safeClass = array();
-    var $arrayMethods = array('first'=> 0, 'last'=> 1, 'length'=> 2, 'size'=> 3);
-    
-    function __construct(&$context){
-        $this->scopes = array($context);
-    }
 
-    function push( $layer = array()){
-        array_unshift($this->scopes, $layer);
-    }
 
-    /**
-     * pop the most recent layer
-     */
-    function pop() {
-        if (count($this->scopes) <= 1)
-        new Exception('cannnot pop from empty stack');
-        return array_shift($this->scopes);
-    }
-
-    function set($name, $value) {
-        if (strpos($name, '.') > -1)
-            new Exception('cannot set non local variable');
-        $this->scopes[0][$name] = $value;
-    }
-    
-    function get($name) {
-        foreach ($this->scopes as $layer) {
-            if (isset($layer[$name]))
-            return $layer[$name];
-        }
-        return null;
-    }
-    
-    function extend($list) {
-        $this->scopes[0] = $this->scopes[0] + $list;
-    }
-
-    function resolve($name, $default = '') {
-        if (ctype_digit($name)) {
-            return !strpos($name, '.') ? intval($name) : floatval($name);
-        }
-        elseif (preg_match('/^["\'](?:.*)["\']$/', $name)) {
-            return stripcslashes(substr($name, 1, -1));
-        }
-        else {
-            return $this->resolveVariable($name);
-        }
-    }
-
-    function resolveVariable($name) {
-        # Local variables. this gives as a bit of performance improvement
-        if (!strpos($name, '.'))
-            return $this->get($name);
-
-        # Prepare for Big lookup
-        $parts = explode('.', $name);
-        $name = array_shift($parts);
-        $object = $this->get($name);
-
-        # Lookup context
-        foreach ($parts as $part) {
-            if (is_array($object)) {
-                if (isset($object[$part])) {
-                    $object = $object[$part];
-                }
-                # Support array short cuts
-                elseif (isset($this->arrayMethods[$part])) {
-                    $size = count($object);
-                    $shortcut = array_combine(
-                        array_flip($this->arrayMethods), 
-                        array(0, $size - 1, $size, $size)
-                    );
-                    if ($part === 'size' || $part === 'length')
-                        return $object = $shortcut[$part];
-                    else
-                        return $object[$shortcut[$part]];
-                } 
-                else return null;
-            }
-            elseif (is_object($object)) {
-                $methodAllow = isset($object->h2o_safe) && in_array($part, $object->h2o_safe);
-                $classAllow =  in_array(get_class($object), $this->safeClass);
-
-                if (method_exists($object, $part) &&  ($methodAllow || $classAllow)){
-                    $node = call_user_func(array($object, $part));
-                } elseif (property_exists($object, $part)) {
-                    $tmp = get_object_vars($object);
-                    $object = $tmp[$part];
-                }
-                else return null;
-            }
-            else return null;
-        }
-        
-        # External Context lookup
-        if (!empty($this->lookupTable))
-            $object = $this->externalLookup($name);
-
-        return $object;
-    }
-    
-    function applyFilters($object, $filters) {
-        $registeredFilters = H2o::$registeredFilters;
-        foreach ($filters as $filter) {
-            $name = array_shift($filter);
-            if (isset($registeredFilters[$name])) {
-                $args = $filter;
-                array_unshift($args, $object);
-                $object = call_user_func_array($registeredFilters[$name], $args);
-            }
-        }
-        return $object;
-    }
-
-    function externalLookup($name, $compile =false){
-        if (!empty($this->lookupTable)) {
-            foreach ($this->lookupTable as $lookup) {
-                $tmp = $lookup($name, $this, $compile);
-                if ($tmp !== null)
-                return $tmp;
-            }
-        }
-        return null;
-    }
-
-    function isDefined($name) {
-        foreach ($this->namespace as $layer) {
-            if (isset($layer[$name]))
-            return true;
-        }
-        return false;
-    }
-}
-
-class BlockContext {
-    private $block, $name, $depth, $index;
-    
-    function __construct($block, $context, $stream, $index) {
-        $this->block = $block;
-        $this->context = $context;
-        $this->stream = $stream;
-        $this->index = $index;
-    }
-
-    function name() {
-        return $this->name;
-    }
-
-    function depth() {
-        return $this->index + 1;
-    }
-
-    function super() {
-        $this->block->render($this->context, $this->stream, $this->index+1);
-    }
-}
 
 class StreamWriter {
     var $buffer = array();
@@ -319,34 +161,10 @@ class StreamWriter {
 }
 
 
-class H2o_FileSystem {
-    function __construct() {
-    }
-    function read() {
-    }
-
-    function write() {
-    }
-
-    function cacheRead($filename) {
-    }
-
-    function cacheWrite($filename) {
-    }
-}
-
-class H2o_Loader {
-    protected $env;
-    function __construct($env) {
-        $this->env = $env;
-    }
-}
 
 class H2o_FileLoader {
-    
     function read($filename) {
        $filepath = $this->env->searchpath . '/' . $filename;
-       
        $cache = md5($fn);
         if (is_file($cache) && (time() - filemtime($cache)) < 3600) {
             $result = unserialize(file_get_contents($cache));
@@ -355,8 +173,7 @@ class H2o_FileLoader {
     }
     
     function write($filename) {
-        file_put_contents($cache, serialize($nodelist));
-        
+        file_put_contents($cache, serialize($nodelist));   
     }
 }
 

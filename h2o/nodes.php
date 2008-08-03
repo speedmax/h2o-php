@@ -44,15 +44,21 @@ class NodeList extends Node {
 }
 
 class VariableNode extends Node {
-	function __construct($variables, $filters, $position = 0){
-		$this->filters = $filters;
+  private $filters = false;
+  private $variables;
+  
+	function __construct($variables, $filters, $position = 0) {
+	  if (!empty($filters))
+        $this->filters = $filters;
+
 		$this->variables = $variables;
 	}
 	
 	function render($context, $stream) {
-		$variable = $context->resolve($this->variables[0]);
-		$content = $context->applyFilters($variable, $this->filters);
-		$stream->write($content);
+		$value = $context->resolve($this->variables[0]);
+		if ($this->filters)
+		  $value = $context->applyFilters($value, $this->filters);
+		$stream->write($value);
 	}
 }
 
