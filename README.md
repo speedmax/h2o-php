@@ -119,12 +119,12 @@ __Filter arguments__
 
 Filters can accept arguments for example `{{ document.description|truncate 20 }}` will display first 20 character of
 document descriptiom. Moreover, there are cases you want to pass multiple arguments and you can use comma( , ) to seperate them
-{{ person.bio|truncate 20, "..." }}
+`{{ person.bio|truncate 20, "..." }}`
 
 __Filter named arguments__
 h2o uses colon ( : ) to for named arguments to build optional arguments array. 
 
-{{ '/images/logo.png' | image_tag width: 450, height: 250, alt: "company logo" }}
+`{{ '/images/logo.png' | image_tag width: 450, height: 250, alt: "company logo" }}`
 
 Note: Difference with django, smarty 
 H2o do not use colon ( : ) character to seperate arguments for readibility reasons, 
