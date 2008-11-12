@@ -1,103 +1,111 @@
 <?php
+class H2o_Lexer {
+    function __construct($options = array()) {
+        $this->options = $options;
+        
+        if ($this->options['TRIM_TAGS'])
+            $trim = '(?:\r?\n)?';
+
+        $this->pattern = ('/(.*?)(?:' .
+            preg_quote($this->options['BLOCK_START']). '(.*?)' .preg_quote($this->options['BLOCK_END']) . $trim . '|' .
+            preg_quote($this->options['VARIABLE_START']). '(.*?)' .preg_quote($this->options['VARIABLE_END']) . '|' .
+            preg_quote($this->options['COMMENT_START']). '(.*?)' .preg_quote($this->options['COMMENT_END']) . $trim . ')/sm'
+        );
+    }
+
+    function tokenize($source) {
+        $result = new TokenStream;
+        $pos = 0;
+        $matches = array();
+        preg_match_all($this->pattern, $source, $matches, PREG_SET_ORDER);
+
+        foreach ($matches as $match) {
+            if ($match[1])
+            $result->feed('text', $match[1], $pos);
+            $tagpos = $pos + strlen($match[1]);
+            if ($match[2])
+            $result->feed('block', trim($match[2]), $tagpos);
+            elseif ($match[3])
+            $result->feed('variable', trim($match[3]), $tagpos);
+            elseif ($match[4])
+            $result->feed('comment', trim($match[4]), $tagpos);
+            $pos += strlen($match[0]);
+        }
+        if ($pos < strlen($source)){
+            $result->feed('text', substr($source, $pos), $pos);
+        }
+        $result->close();
+        return $result;
+    }
+}
+
 class H2o_Parser {
     var $first;
     var $storage = array();
-    protected $runtime;
+    var $filename;
+    var $runtime;
     
-	function __construct($source, $filename, $options) {
-		$this->options = $options;
-		$this->source = $source;
-		$this->first = true;
-		
-        if ($this->options['TRIM_TAGS'])
-			$trim = '(?:\r?\n)?';
-			
-		$this->pattern = ('/(.*?)(?:' .
-			preg_quote($this->options['BLOCK_START']). '(.*?)' .preg_quote($this->options['BLOCK_END']) . $trim . '|' .
-			preg_quote($this->options['VARIABLE_START']). '(.*?)' .preg_quote($this->options['VARIABLE_END']) . '|' .
-			preg_quote($this->options['COMMENT_START']). '(.*?)' .preg_quote($this->options['COMMENT_END']) . $trim . ')/sm'
-		);
-		$this->tokenstream = $this->tokenize();
-	}
+    function __construct($source, $filename, $runtime, $options) {
+        $this->options = $options;
+        //$this->source = $source;
+        $this->runtime = $runtime;
+        $this->filename = $filename;
+        $this->first = true;
+        
+        $this->lexer = new H2o_Lexer($options);
+        $this->tokenstream = $this->lexer->tokenize($source);
+        $this->storage = array(
+          'blocks' => array(),
+          'templates' => array(),
+          'included' => array()
+        );
+    }
 
-	function tokenize() {
-		$result = new TokenStream;
-		$pos = 0;
-		$matches = array();
-		preg_match_all($this->pattern, $this->source, $matches, PREG_SET_ORDER);
+    function &parse() {
+        $until = func_get_args();
+        $nodelist = new NodeList($this);
+        while($token = $this->tokenstream->next()) { 
+            //$token = $this->tokenstream->current();
+            switch($token->type) {
+                case 'text' :
+                    $node = new TextNode($token->content, $token->position);
+                    break;
+                case 'variable' :
+                    $args = H2o_Parser::parseArguments($token->content, $token->position);
+                    $variable = array_shift($args);
+                    $filters = $args;
+                    $node = new VariableNode($variable, $filters, $token->position);
+                    break;
+                case 'comment' :
+                    $node = new CommentNode($token->content);
+                    break;
+                case 'block' :
+                    if (in_array($token->content, $until)) {
+                        $this->token = $token;                      
+                        return $nodelist;
+                    }
+                    @list($name, $args) = preg_split('/\s+/',$token->content, 2);
+                    $node = H2o::createTag($name, $args, $this, $token->position);
+                    $this->token = $token;
+            }
+            $this->searching = join(',',$until);
+            $this->first = false;
+            $nodelist->append($node);
+        }
 
-		foreach ($matches as $match) {
-			if ($match[1])
-			$result->feed('text', $match[1], $pos);
-			$tagpos = $pos + strlen($match[1]);
-			if ($match[2])
-			$result->feed('block', trim($match[2]), $tagpos);
-			elseif ($match[3])
-			$result->feed('variable', trim($match[3]), $tagpos);
-			elseif ($match[4])
-			$result->feed('comment', trim($match[4]), $tagpos);
-			$pos += strlen($match[0]);
-		}
-		if ($pos < strlen($this->source)){
-			$result->feed('text', substr($this->source, $pos), $pos);
-		}
-		$result->close();
-		return $result;
-	}
-	
-	function &parse() {
-		$until = func_get_args();
-		$nodelist = new NodeList($this);
-		while($token = $this->tokenstream->next()) { 
-			//$token = $this->tokenstream->current();
-			switch($token->type) {
-				case 'text' :
-					$node = new TextNode($token->content, $token->position);
-					break;
-				case 'variable' :
-					$variables = $filters = array();
-					$args = H2o_Parser::parseArguments($token->content, $token->position);
+        if ($until) {
+            throw new TemplateSyntaxError('Unclose tag, expecting '. $until[0]);
+        }
+        return $nodelist;
+    }
 
-					// Parse out filters and variables
-					foreach ($args as $data){
-						if (is_array($data)) {
-							$filters[] = $data;
-						} else {
-							$variables[] = $data;
-						}
-					}
-					$node = new VariableNode($variables, $filters, $token->position);
-					break;
-				case 'comment' :
-					$node = new CommentNode($token->content);
-					break;
-				case 'block' :
-					if (in_array($token->content, $until)) {
-						$this->token = $token;						
-						return $nodelist;
-					}
-					@list($name, $args) = preg_split('/\s+/',$token->content, 2);
-					$node = H2o::createTag($name, $args, $this, $token->position);
-					$this->token = $token;
-			}
-			$this->searching = join(',',$until);
-			$this->first = false;
-			$nodelist->append($node);
-		}
-		
-		if ($until) {
-			throw new TemplateSyntaxError('Unclose tag, expecting '. $until[0]);
-		}
-		return $nodelist;
-	}
-	
-	function skipTo($until) {
-		$this->parse($until);
-		return null;
-	}
+    function skipTo($until) {
+        $this->parse($until);
+        return null;
+    }
 
     # Parse arguments
-    static function parseArguments($source = null, $fpos){
+    static function parseArguments($source = null, $fpos = 0){
         $parser = new ArgumentLexer($source, $fpos);
         $result = array();
         $current_buffer = &$result;
@@ -110,15 +118,23 @@ class H2o_Parser {
             }
             elseif ($token == 'filter_end') {
                 if (count($filter_buffer))
-                    $result [] = $filter_buffer;
+                    $result[] = $filter_buffer;
                 $current_buffer = &$result;
             }
-            elseif ($token == 'name' || $token == 'number' || $token == 'string') {
-                $current_buffer[] = $data;
+            elseif ($token == 'name') {
+                $current_buffer[] = symbol($data);
             }
+            elseif ($token == 'number' || $token == 'string') { 
+                $current_buffer[] = $data;
+            } 
             elseif ($token == 'named_argument') {
-                list($name,$value) = preg_split('/:/',$data,2);
-                $current_buffer[trim($name)] = trim($value);
+                $last = $current_buffer[count($current_buffer) - 1];
+                if (!is_array($last))
+                    $current_buffer[] = array();
+
+                $namedArgs =& $current_buffer[count($current_buffer) - 1]; 
+                list($name,$value) = array_map('trim', explode(':',$data));
+                $namedArgs[$name] = $value;
             }
             elseif( $token == 'operator') {
                 $current_buffer[] = array('operator'=>$data);
@@ -128,127 +144,129 @@ class H2o_Parser {
     }
 }
 
+class H2O_RE {
+    static  $whitespace, $seperator, $parentheses, $pipe, $filter_end, $operator,
+            $number,  $string, $i18n_string, $name, $named_args;
+
+    function init() {
+        $r = 'strip_regex';
+        
+        self::$whitespace   = '/\s+/m';
+        self::$parentheses  = '/\(|\)/m';
+        self::$filter_end   = '/;/';
+        self::$seperator    = '/,/';
+        self::$pipe         = '/\|/';
+        self::$operator     = '/\s?(>|<|>=|<=|!=|==|and|not|or)\s?/i';
+        self::$number       = '/\d+(\.\d*)?/';
+        self::$name         = '/[a-zA-Z][a-zA-Z0-9-_]*(?:\.[a-zA-Z_0-9][a-zA-Z0-9_-]*)*/';
+        
+        self::$string       = '/(?:
+                "([^"\\\\]*(?:\\\\.[^"\\\\]*)*)" |   # Double Quote string   
+                \'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\' # Single Quote String
+        )/xsm';
+        self::$i18n_string  = "/_\({$r(self::$string)}\) | {$r(self::$string)}/xsm";
+
+        self::$named_args   = "{
+            ({$r(self::$name)})(?:{$r(self::$whitespace)})?
+            : 
+            (?:{$r(self::$whitespace)})?({$r(self::$i18n_string)}|{$r(self::$number)}|{$r(self::$name)})
+        }x";
+    }
+}
+H2O_RE::init();
+
 class ArgumentLexer {
-	/**
-	 * Argument source
-	 */
-	var $source;
-	var $match;
-	var $pos = 0;
-	var $fpos;
-	var $eos;
-	var $options;
+    private $source;
+    private $match;
+    private $pos = 0, $fpos, $eos;
+    private $operator_map = array(
+        '!' => 'not', '!='=> 'ne', '==' => 'eq', '>' => 'gt', '<' => 'lt', '<=' => 'le', '>=' => 'ge'
+    );
 
-	static function getOptions(){
-		return array(
-		/*	Argument regex	*/
-		'WHITESPACE_RE' => '/\s+/m',
-		'PARENTHESES_RE' => '/\(|\)/m',
-		'NAME_RE' => '/[a-zA-Z_][a-zA-Z0-9-_]*(\.[a-zA-Z_0-9][a-zA-Z0-9_-]*)*/',
-		'PIPE_RE' => '/\|/' ,
-		'SEPARATOR_RE' => '/,/',
-		'FILTER_END_RE' => '/;/',
-		'STRING_RE' => '/(?:"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|\'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\')/sm',
-		'NUMBER_RE' => '/\d+(\.\d*)?/',
-		'OPERATOR_RE' => '/\s?(>|<|=|>=|<=|!=|==|=|and|not|or)\s/i',
-		'NAMED_ARGS_RE' => '/([a-zA-Z_][a-zA-Z0-9_-]*(?:\.[a-zA-Z_][a-zA-Z0-9_-]*)*)\s?:\s?((?:"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|\'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\')|\d+(\.\d*)?|[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)/',
+    function __construct($source, $fpos){
+        if (!is_null($source))
+          $this->source = $source;
+        $this->fpos=$fpos;
+    }
 
-		/*	Replace operator	*/
-		'operator_replace' => array('and'	=> '&&',
-		'or'	=> '||',
-		'not'	=> '!',
-		'='		=> '=='),
-		);
-	}
+    function parse(){
+        $result = array();
+        $filtering = false;
+        while (!$this->eos()) {
+            $this->scan(H2O_RE::$whitespace);
+            if (!$filtering) {
+                if ($this->scan(H2O_RE::$operator)){
+                    $operator = trim($this->match);
+                    if(isset($this->operator_map[$operator]))
+                        $operator = $this->operator_map[$operator];
+                    $result[] = array('operator', $operator);
+                }
+                elseif ($this->scan(H2O_RE::$named_args))
+                    $result[] = array('named_argument', $this->match);                      
+                elseif ($this->scan(H2O_RE::$name))
+                    $result[] = array('name', $this->match);
+                elseif ($this->scan(H2O_RE::$pipe)) {
+                    $filtering = true;
+                    $result[] = array('filter_start', $this->match);
+                }
+                elseif ($this->scan(H2O_RE::$seperator))
+                    $result[] = array('separator', null);
+                elseif ($this->scan(H2O_RE::$i18n_string))
+                    $result[] = array('string', $this->match);
+                elseif ($this->scan(H2O_RE::$number))
+                    $result[] = array('number', $this->match);
+                else
+                    throw new TemplateSyntaxError('unexpected character in filters : "'. $this->source[$this->pos]. '" at '.$this->getPosition());
+            } 
+            else {
+                // parse filters, with chaining and ";" as filter end character
+                if ($this->scan(H2O_RE::$pipe)) {
+                    $result[] = array('filter_end', null);
+                    $result[] = array('filter_start', null);
+                }
+                elseif ($this->scan(H2O_RE::$seperator))
+                    $result[] = array('separator', null);
+                elseif ($this->scan(H2O_RE::$filter_end)) {
+                    $result[] = array('filter_end', null);
+                    $filtering = false;
+                }
+                elseif ($this->scan(H2O_RE::$named_args))
+                    $result[] = array('named_argument', $this->match);
+                elseif ($this->scan(H2O_RE::$name))
+                    $result[] = array('name', $this->match);
+                elseif ($this->scan(H2O_RE::$i18n_string))
+                    $result[] = array('string', $this->match);
+                elseif ($this->scan(H2O_RE::$number))
+                    $result[] = array('number', $this->match);          
+                else
+                    throw new TemplateSyntaxError('unexpected character in filters : "'. $this->source[$this->pos]. '" at '.$this->getPosition());
+            }
+        }
+        // if we are still in the filter state, we add a filter_end token.
+        if ($filtering)
+            $result[] = array('filter_end', null);
+        return $result;
+    }
 
-	function __construct($source, $fpos){
-		$this->pos = 0;
-		if(!is_null($source))
-		$this->source = $source;
-		$this->options = $this->getOptions();
-		$this->fpos=$fpos;
-	}
+    # String scanner
+    function scan($regexp) {
+        if (preg_match($regexp . 'A', $this->source, $match, null, $this->pos)) {
+            $this->match = $match[0];
+            $this->pos += strlen($this->match);
+            return true;
+        }
+        return false;
+    }
 
-	function parse(){
-		$result = array();
-		$filtering = false;
-		$options = $this->options;
-		while (!$this->eos()) {
-			$this->scan($options['WHITESPACE_RE']);
-			if (!$filtering) {
-				if ($this->scan($options['OPERATOR_RE'])){
-					$operator = $this->match;
-					if(isset($options['operator_replace'][trim($operator)]))
-					$operator = $options['operator_replace'][trim($operator)];
-					$result[] = array('operator', $operator);
-				}
-				elseif ($this->scan($options['NAMED_ARGS_RE']))
-				    $result[] = array('named_argument', $this->match);						
-				elseif ($this->scan($options['NAME_RE']))
-				    $result[] = array('name', $this->match);
-				elseif ($this->scan($options['PIPE_RE'])) {
-					$filtering = true;
-					$result[] = array('filter_start', $this->match);
-				}
-				elseif ($this->scan($options['SEPARATOR_RE']))
-				    $result[] = array('separator', null);
-				elseif ($this->scan($options['STRING_RE']))
-				    $result[] = array('string', $this->match);
-				elseif ($this->scan($options['NUMBER_RE']))
-				    $result[] = array('number', $this->match);
-				else
-				//TODO: global error handing
-				die ('unexpected character in filters : "'. $this->source[$this->pos]. '" at '.$this->getPosition());
-			}
-			else {
-				// parse filters, with chaining and ";" as filter end character
-				if ($this->scan($options['PIPE_RE'])) {
-				    $result[] = array('filter_end', null);
-				    $result[] = array('filter_start', null);
-				}
-				elseif ($this->scan($options['SEPARATOR_RE']))
-				    $result[] = array('separator', null);
-				elseif ($this->scan($options['FILTER_END_RE'])) {
-				    $result[] = array('filter_end', null);
-					$filtering= false;
-				}
-				elseif ($this->scan($options['NAMED_ARGS_RE']))
-				    $result[] = array('named_argument', $this->match);
-				elseif ($this->scan($options['NAME_RE']))
-				    $result[] = array('name', $this->match);
-				elseif ($this->scan($options['STRING_RE']))
-				    $result[] = array('string', $this->match);
-				elseif ($this->scan($options['NUMBER_RE']))
-				    $result[] = array('number', $this->match);			
-				else
-				//TODO: global error handing
-				die ('unexpected character in filters : "'. $this->source[$this->pos]. '" at '.$this->getPosition());
-			}
-		}
-		// if we are still in the filter state, we add a filter_end token.
-		if ($filtering)
-		    $result[] = array('filter_end', null);
-		return $result;
-	}
-
-	function eos() {
-		return $this->pos >= strlen($this->source);
-	}
-
-	function scan($regexp) {
-		if (preg_match($regexp . 'A', $this->source, $match, null, $this->pos)) {
-			$this->match = $match[0];
-			$this->pos += strlen($this->match);
-			return true;
-		}
-		return false;
-	}
-	/**
-	 * return the position in the template
-	 */
-	function getPosition() {
-		return $this->fpos + $this->pos;
-	}
-
+    function eos() {
+        return $this->pos >= strlen($this->source);
+    }
+    
+    /**
+     * return the position in the template
+     */
+    function getPosition() {
+        return $this->fpos + $this->pos;
+    }
 }
 ?>

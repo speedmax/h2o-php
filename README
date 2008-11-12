@@ -1,8 +1,0 @@
-H2o template engine
-========================
-
-H2O is a template engine originally written in PHP, a django template port. 
-
- * text and html as a user interface for developers, beautiful and human friendly syntax, 
- * reusable templates with include sub template and inheritance
- * fast, current the php port compiles template down to native php. (looking at smarty)

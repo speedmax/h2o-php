@@ -1,80 +1,121 @@
 <?php
+/**
+ * 
+ * @author taylor.luk
+ * @todo tags need more test coverage
+ */
 
-class IfTag extends Tag {
-    var $syntax = '//';
+class Tag extends Node {
+    var $position = 0;
+}
+
+class If_Tag extends Tag {
+    var $body;
+    var $else;
+    var $negate;
+    
     function __construct($argstring, $parser, $position = 0) {
+        if (preg_match('/\s(and|or)\s/', $argstring)) 
+            throw new TemplateSyntaxError('H2o doesn\'t support multiple expressiosn');
+
         $this->body = $parser->parse('endif', 'else');
         
         if ($parser->token->content === 'else')
             $this->else = $parser->parse('endif');
+
+        $this->args = H2o_Parser::parseArguments($argstring);
+
+        $first = current($this->args);
+        if (isset($first['operator']) && $first['operator'] === 'not') {
+            array_shift($this->args);
+            $this->negate = true;
+        }
     }
-    
+
     function render($context, $stream) {
-        $this->body->render($context, $stream);
+        if ($this->test($context)) 
+            $this->body->render($context, $stream);
+        elseif ($this->else)
+            $this->else->render($context, $stream);
+    }
+
+    function test($context) {
+        $test = Evaluator::exec($this->args, $context);
+        return $this->negate? !$test : $test;
     }
 }
 
-class ForTag extends Tag {
-    var $position;
-    private  $iteratable, $key, $item, $body, $else;
-    private $syntax = '/(\w+)\s+in\s+(\w+)\s*(reversed)?/';
+class For_Tag extends Tag {
+    public $position;
+    private $iteratable, $key, $item, $body, $else;
+    private $syntax = '{
+        ([a-zA-Z][a-zA-Z0-9-_]*)(?:,\s?([a-zA-Z][a-zA-Z0-9-_]*))?
+        \s+in\s+
+        ([a-zA-Z][a-zA-Z0-9-_]*(?:\.[a-zA-Z_0-9][a-zA-Z0-9_-]*)*)\s*   # Iteratable name
+        (reversed)?                                                     # Reverse keyword
+    }x';
 
     function __construct($argstring, $parser, $position) {
+        if (!preg_match($this->syntax, $argstring, $match))
+            throw new TemplateSyntaxError("Invalid for loop syntax ");
+        
         $this->body = $parser->parse('endfor', 'else');
         
         if ($parser->token->content === 'else')
             $this->else = $parser->parse('endfor');
 
-        if (preg_match($this->syntax, $argstring, $match)) {
-            @list(,$this->item, $this->iteratable, $this->reversed) = $match;
-            $this->reversed = (bool) $this->reversed;
-            $this->key = 'key_';
-        } else {
-            throw TemplateSyntaxError("Invalid for loop syntax ");
+        @list(,$this->key, $this->item, $this->iteratable, $this->reversed) = $match;
+        
+        # Swap value if no key found
+        if (!$this->item) {
+            list($this->key, $this->item) = array($this->item, $this->key);
         }
+        $this->reversed = (bool) $this->reversed;
     }
-    
+
     function render($context, $stream) {
-        $iteratable = $context->resolve($this->iteratable);
+        $iteratable = $context->getVariable($this->iteratable);
         if ($this->reversed)
             $iteratable = array_reverse($iteratable);
         $length = count($iteratable);
         
         if ($length) {
-            $parent = $context->resolve('loop');
+            $parent = $context['loop'];
             $context->push();
             $rev_count = $is_even = $idx = 0;
             foreach($iteratable as $key => $value) {
                 $is_even =  $idx % 2;
                 $rev_count = $length - $idx;
                 
-                $context->set($this->item, $value);
-                $context->set('loop', array(
+                if ($this->key) {
+                    $context[$this->key] = $key;
+                }
+                $context[$this->item] =  $value;
+                $context['loop'] = array(
                     'parent' => $parent,
                     'first' => $idx === 0, 
                     'last'  => $rev_count === 1,
-                    'odd'	=> ! $is_even,
+                    'odd'	=> !$is_even,
                     'even'	=> $is_even,
-                    'length' => '',
+                    'length' => $length,
                     'counter' => $idx + 1,
                     'counter0' => $idx,
                     'revcounter' => $rev_count,
                     'revcounter0' => $rev_count - 1
-                ));    
+                );
                 $this->body->render($context, $stream);
                 ++$idx;                
             }
             $context->pop();
-        } else {
+        } elseif ($this->else)
             $this->else->render($context, $stream);
-        }
     }
 }
 
-class BlockTag extends Tag {
-    var $name;
-    var $position;
-    private $stack;
+class Block_Tag extends Tag {
+    public $name;
+    public $position;
+    public $stack;
     private $syntax = '/^[a-zA-Z_][a-zA-Z0-9_]*$/';
     
     function __construct($argstring, $parser, $position) {
@@ -82,59 +123,70 @@ class BlockTag extends Tag {
             throw new TemplateSyntaxError('Block tag expects a name, example: block [content]');
 
         $this->name = $argstring;
-        $this->stack = array($parser->parse('endblock', "endblock {$this->name}"));
-        $blocks =& $parser->storage['blocks'];
-        
-        if (isset($blocks[$this->name]))
+
+        if (isset($parser->storage['blocks'][$this->name]))
             throw new TemplateSyntaxError('Block name exists, Please select a different block name');
-            
-        $blocks[$this->name] =& $this;
+
+        $this->filename = $parser->filename;
+        $this->stack = array($parser->parse('endblock', "endblock {$this->name}"));
+
+        $parser->storage['blocks'][$this->name] = $this;
         $this->position = $position;
     }
 
-    function addLayer(&$nodelist){
-        $this->stack[] = $nodelist;
+    function addLayer(&$nodelist) {
+        $nodelist->parent = $this;
+        array_push($this->stack, $nodelist);
     }
 
     function render($context, $stream, $index = 1) {
-        $context->push(array(
-			'block' => new BlockContext($this, $context, $stream, $index)
-        ));
-        $key = count($this->stack) - $index;
+        $nodelist = $this->stack[count($this->stack) - $index];
         
-        if (isset($this->stack[$key])) {
-            $this->stack[$key]->render($context, $stream);
+        if ($nodelist) {
+            $context->push();
+            $context['block'] = new BlockContext($this, $context, $index);
+            $nodelist->render($context, $stream);
+            $context->pop();
         }
-        $context->pop();
     }
 }
 
-class ExtendsTag extends Tag {
-    var $filename;
-    protected $nodelist;
+class Extends_Tag extends Tag {
+    public $filename;
+    public $position;
+    public $nodelist;
+    private $syntax = '/^["\'](.*?)["\']$/';
     
     function __construct($argstring, $parser, $position = 0) {
-		if (!$parser->first)
+      if (!$parser->first)
 		    throw new TemplateSyntaxError('extends must be first in file');
 
-        if (!preg_match('/^["\'](.*?)["\']$/', $argstring))
+      if (!preg_match($this->syntax, $argstring))
 		    throw new TemplatesyntaxError('filename must be quoted');
+
+		$this->filename = stripcslashes(substr($argstring, 1, -1));
+
+        # Parse the current template
+        $parser->parse();
+
+		# Parse parent template
+		$this->nodelist = $parser->runtime->loadSubTemplate($this->filename, $parser->options);
+        $parser->storage['templates'] = array_merge(
+            $parser->storage['templates'], $this->nodelist->parser->storage['templates']
+        );
+        $parser->storage['templates'][] = $this->filename;
         
-		$this->filename = substr($argstring, 1, -1);
-		$this->nodelist = H2o::load($this->filename, $parser->options);
-
-		$parser->parse();
-
-		if (!isset($this->nodelist->parser->storage['blocks']) || !isset($parser->storage['blocks'])) {
+		if (!isset($this->nodelist->parser->storage['blocks']) || !isset($parser->storage['blocks']))
 		    return ;
-		}
 
 		# Blocks of parent template
-		$blocks = $this->nodelist->parser->storage['blocks'];
-		
-		foreach($parser->storage['blocks'] as $name => $block) {
-		    if (isset($blocks[$name]))
+		$blocks =& $this->nodelist->parser->storage['blocks'];
+
+		# Push child blocks on top of parent blocks
+		foreach($parser->storage['blocks'] as $name => &$block) {
+		    if (isset($blocks[$name])) {
 		        $blocks[$name]->addLayer($block);
+		    }
 		}
     }
     
@@ -143,5 +195,114 @@ class ExtendsTag extends Tag {
     }
 }
 
-H2o::addTag(array('Block', 'Extends', 'If', 'For'));
+class Include_Tag extends Tag {
+    private $nodelist;
+    private $syntax = '/^["\'](.*?)["\']$/';
+    
+    function __construct($argstring, $parser, $position = 0) {
+        if (!preg_match($this->syntax, $argstring)) 
+            throw new TemplateSyntaxError();
+
+        $this->filename = stripcslashes(substr($argstring, 1, -1));
+        $this->nodelist = $parser->runtime->loadSubTemplate($this->filename, $parser->options);
+        $parser->storage['templates'] = array_merge(
+            $this->nodelist->parser->storage['templates'], $parser->storage['templates']
+        );
+        $parser->storage['templates'][] = $this->filename;
+    }
+
+    function render($context, $stream) {
+        $this->nodelist->render($context, $stream);
+    }
+}
+
+class With_Tag extends Tag {
+    public $position;
+    private $variable, $shortcut;
+    private $nodelist;
+    private $syntax = '/^([\w]+(:?\.[\w]+)?)\s+as\s+([\w]+(:?\.[\w]+)?)$/';
+    
+    function __construct($argstring, $parser, $position = 0) {
+        if (!preg_match($this->syntax, $argstring, $matches))
+            throw new TemplateSyntaxError('Invalid with tag syntax');
+            
+        # extract the long name and shortcut
+        list($this->variable, $this->shortcut) = $matches;
+        $this->nodelist = $parser->parse('endwith');
+    }
+    
+    function render($context, $stream) {
+        $variable = $context->getVariable($this->variable);
+        
+        $context->push(array($this->shortcut => $variable));
+        $this->nodelist->render($context, $stream);
+        $context->pop();
+    }
+}
+
+class Cycle_Tag extends Tag {
+    private $uid;
+    private $sequence;
+    
+    function __construct($argstring, $parser, $pos) {
+        $args = h2o_parser::parseArguments($argstring);
+        
+        if (count($args) < 2) {
+            throw new Exception('Cycle tag require more than two items');
+        }
+        $this->sequence = $args;        
+        $this->uid = '__cycle__'.$pos;
+    }
+    
+    function render($context, $stream) {
+        if (!is_null($item = $context->getVariable($this->uid))) {
+            $item = ($item + 1) % count($this->sequence);
+        } else {
+            $item = 0;
+        }
+        $stream->write($context->resolve($this->sequence[$item]));
+        $context->set($this->uid, $item);
+    }
+}
+
+class Load_Tag extends Tag {
+    static $searchpath = array(H2O_ROOT);
+    var $extension;
+    
+    function __construct($argstring, $parser, $pos = 0) {
+        $this->extension = stripcslashes(substr($argstring, 1, -1));
+        
+        if ($parser->runtime->searchpath)
+            $this->appendPath($parser->runtime->searchpath);
+
+        $parser->storage['included'][$this->extension] = $file = $this->load();
+    }
+
+    function render($context, $stream) {
+        $this->load();
+    }
+
+    function appendPath($path) {
+        self::$searchpath[] = $path;
+    }
+    
+    private function load() {
+        if (isset(h2o::$extensions[$this->extension])) {
+            return true;
+        }
+        foreach(self::$searchpath as $path) {
+            $file = $path.'ext'.DS.$this->extension.'.php';
+            if (is_file($file)) {
+                h2o::load($this->extension, $file);
+                return $file;
+            }
+        }
+
+        throw new H2o_Error(
+            "Extension: {$this->extension} cannot be loaded, please confirm it exist in extension path"
+        );
+    }
+}
+
+H2o::addTag(array('block', 'extends', 'include', 'if', 'for', 'with', 'cycle', 'load'));
 ?>

@@ -1,0 +1,57 @@
+8
+
+dir
+24
+https://h2o-template.googlecode.com/svn/trunk/ext
+https://h2o-template.googlecode.com/svn
+
+
+
+2008-10-24T02:56:37.698668Z
+24
+subjective
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+46d78ebc-3749-0410-ba3b-0d0f49807cd4
+
+design.php
+file
+
+
+
+
+2008-10-27T12:09:18.000000Z
+86f1ce787cd455460d6edd542e816cb7
+2008-10-24T02:56:37.698668Z
+24
+subjective
+has-props
+
+i18n.php
+file
+
+
+
+
+2008-10-27T12:09:18.000000Z
+85d3ecf677602145a07071cbd204432d
+2008-10-24T02:56:37.698668Z
+24
+subjective
+has-props
+
+cakephp
+dir
+

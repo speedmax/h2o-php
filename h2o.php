@@ -1,255 +1,225 @@
 <?php
-ini_set('display_errors', 1);
+define('H2O_VERSION', '0.3');
+defined('DS') or define('DS', DIRECTORY_SEPARATOR);
+defined('H2O_ROOT') or define('H2O_ROOT', dirname(__FILE__) . DS);
 
-if (!defined('DS')) define('DS', DIRECTORY_SEPARATOR);
-define('H2O_ROOT', dirname(__FILE__).DS);
-
-require 'Krumo/class.krumo.php';
-function pd() { $args = func_get_args();krumo($args);die;}
+require H2O_ROOT.'h2o/datatype.php';
+require H2O_ROOT.'h2o/loaders.php';
 require H2O_ROOT.'h2o/nodes.php';
 require H2O_ROOT.'h2o/tags.php';
 require H2O_ROOT.'h2o/errors.php';
 require H2O_ROOT.'h2o/filters.php';
 require H2O_ROOT.'h2o/context.php';
 
-
-$h2o = new H2o('./inherit.html');
-$context = array(
-    'page' => array(
-    	'title' => 'this is a page title',
-    	'description' => 'this is a a page description',
-    	'body' => 'This is page body'
-    ),
-    'links' => array('http://www.google.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com', 'http://yahoo.com')
-);
-
-$start = microtime(true);
-echo $h2o->render($context);
-echo microtime(true) - $start;
-
+/**
+ * Example:
+ *  $h2o = new H2O('./template.html', array("loader"=>'file'));
+ *  
+ *  
+ *  $h2o = new H2O('template.html', array("loader"=>'hash'));
+ */
 class H2o {
     var $searchpath;
     var $context;
+    var $loader = false;
     
-    static $registeredTags = array();
-    static $registeredFilters = array();
-
-    function __construct($file, $options = array()) {
+    static $tags = array();
+    static $filters = array();
+    static $extensions = array();
+    
+    function getOptions($options = array()) {
+        return array_merge(array(
+            'loader'            =>       'file',
+            'cache'             =>      'file',     // file | apc | memcache
+            'cache_ttl'         =>      3600,     // file | apc | memcache
+            'searchpath'       =>      false,
+  
+            // Enviroment setting
+            'BLOCK_START'       =>      '{%',
+            'BLOCK_END'         =>      '%}',
+            'VARIABLE_START'    =>      '{{',
+            'VARIABLE_END'      =>      '}}',
+            'COMMENT_START'     =>      '{*',
+            'COMMENT_END'       =>      '*}',
+            'TRIM_TAGS'     => true
+        ), $options);
+    }
+    
+    function __construct($file = '', $options = array()) {
         # Init a environment
-        $this->options = H2o::getOptions($options);
-        
-        # Load using this environment
-        $this->nodelist = H2o::load($file, $this->options);
-	}
-	
+        $this->options = $this->getOptions($options);        
+        $loader = $this->options['loader'];
+
+        if (!$loader)
+            return true;
+
+        if (is_object($loader)) {
+            $this->loader = $loader;
+            $this->loader->setOptions($this->options);
+        } else {
+            $loaderClass = "H2o_{$loader}_Loader";
+            if (!class_exists($loaderClass))
+                throw new Exception('Invalid template loader');
+                
+            if (isset($options['searchpath']))
+                $this->searchpath = realpath($options['searchpath']).DS;
+            else
+                $this->searchpath = dirname(realpath($file)).DS;
+            $this->loader = new $loaderClass($this->searchpath, $this->options);
+        }
+        $this->loader->runtime = $this;
+        $this->nodelist = $this->loadTemplate($file);
+    }
+
+    function loadTemplate($file) {
+        return $this->nodelist = $this->loader->read_cache($file);
+    }
+    
+    function loadSubTemplate($file) {
+        return $this->loader->read($file);
+    }
+    
     # Build a finalized nodelist from template ready to be cached
+    function parse($source, $filename = '', $env = null) {
+        if (!$env)
+            $env = $this->options;
+
+        if (!class_exists('H2o_Parser'))
+            require H2O_ROOT.'h2o/parser.php';
+
+        $parser = new H2o_Parser($source, $filename, $this, $env);
+        $nodelist = $parser->parse();
+        return $nodelist;
+    }
 
     # Render the nodelist
-    function render($context) {
+    function render($context = array()) {
+        $context = array_merge($this->defaultContext(), $context);
+        
+        if (is_object($context) && $context instanceof H2o_Context) {
+            $this->context = $context;
+        } else {
+            $this->context = new H2o_Context($context);
+        }
+
         $this->stream = new StreamWriter;
-        $this->nodelist->render(new H2o_Context($context), $this->stream);
+        $this->nodelist->render($this->context, $this->stream);
         return $this->stream->close();
     }
 
-
-	static function load($file, $env = null) {
-	    if (!$env) {
-	        $env = H2o::getOptions();
-	    }
-	    $filename = realpath($file);
-//        $cache = md5($fn);
-//        
-//        # Cache hit
-//        if (is_file($cache) && (time() - filemtime($cache)) < 10) {
-//            $nodelist = unserialize(file_get_contents($cache));
-//        } else {
-        if (!class_exists('H2o_Parser'))
-            require H2O_ROOT.'h2o/parser.php';
-            
-            $source = file_get_contents($filename);
-            $parser = new H2o_Parser($source, $filename, $env);
-            $nodelist = $parser->parse();
-//            file_put_contents($cache, serialize($this->nodelist));
-//        }
-        return $nodelist;
-	}
-
-    static function getOptions($options = array()) {
-        return array_merge(array(
-            'loader'			=>    'H2o_FileLoader',
-                // Enviroment setting
-        	'BLOCK_START'		=>		'{%',
-        	'BLOCK_END'			=>		'%}',
-        	'VARIABLE_START'	=>		'{{',
-        	'VARIABLE_END'		=>		'}}',
-        	'COMMENT_START'		=>      '{*',
-        	'COMMENT_END'		=>      '*}',
-        	'TRIM_TAGS'     => true
-         ), $options);
+    static function parseString($source) {
+        $instance = new H2o(null, array('loader' => false));
+        $instance->nodelist = $instance->parse($source);
+        return $instance;
     }
-    
-    static function createTag($tag, $args = null, $parser, $position = 0) {
-        $tag = ucwords($tag);
-        if (isset(self::$registeredTags[$tag])) {
-            $tagClass = "{$tag}Tag";
-            return new $tagClass($args, $parser, $position);
+
+    static function &createTag($tag, $args = null, $parser, $position = 0) {
+        if (!isset(self::$tags[$tag])) {
+            throw new H2o_Error($tag . " tag doesn't exist");
         }
+        $tagClass = self::$tags[$tag];
+        $tag = new $tagClass($args, $parser, $position);
+        return $tag;
     }
 
-    # Static method to add Tag
+    /**
+     * Register a new tag
+     *
+     * 
+     * h2o::addTag('tag_name', 'ClassName');
+     * 
+     * h2o::addTag(array(
+     *      'tag_name' => 'MagClass',
+     *      'tag_name2' => 'TagClass2'
+     * ));
+     * 
+     * 
+     *  h2o::addTag('tag_name');      // Tag_name_Tag
+     * 
+     * h2o::addTag(array('tag_name', 
+     * @param unknown_type $tag
+     * @param unknown_type $class
+     */
     static function addTag($tag, $class = null) {
         $tags = array();
         if (is_string($tag)) {
-            if (is_null($class)) $class = "{$tag}Tag";
+            if (is_null($class)) 
+                $class = ucwords("{$tag}_Tag");
             $tags[$tag] = $class;
         } elseif (is_array($tag)) {
             $tags = $tag;
         }
-
+        
         foreach ($tags as $tag => $tagClass) {
-            if (is_integer($tag)) {
-                $tags[$tagClass] = "{$tagClass}Tag";
+            if (is_integer($tag)) {        
                 unset($tags[$tag]);
+                $tag = $tagClass;
+                $tagClass = ucwords("{$tagClass}_Tag");
             }
+            if (!class_exists($tagClass)) {
+                throw new H2o_Error("{$tagClass} tag is not found");
+            }
+            $tags[$tag] = $tagClass;
         }
-        self::$registeredTags = array_merge(self::$registeredTags, $tags);
+        self::$tags = array_merge(self::$tags, $tags);
     }
 
+    /**
+     * Register a new filter to h2o runtime
+     *
+     * @param unknown_type $filter
+     * @param unknown_type $callback
+     * @return unknown
+     */
     static function addFilter($filter, $callback = null) {
         if (is_array($filter)) {
             $filters = $filter;
             foreach($filters as $key => $filter) {
                 if (is_numeric($key))
-                    self::addFilter($filter);
-                else
-                    self::addFilter($key, $filter);
+                    $key = $filter;
+                self::addFilter($key, $filter);
+            }
+            return true;
+        } elseif (is_string($filter) && class_exists($filter) && is_subclass_of($filter, 'FilterCollection')) {
+            foreach (get_class_methods($filter) as $f) {
+                if (is_callable(array($filter, $f)))
+                    self::$filters[$f] = array($filter, $f);
             }
             return true;
         }
-
-        if (is_null($callback)) {
+        if (is_null($callback))
             $callback = $filter;
-        }
-        if (!is_callable($callback)){
+            
+        if (!is_callable($callback)) {
             return false;
         }
-        self::$registeredFilters[$filter] = $callback;
-    }
-}
-
-
-
-
-class StreamWriter {
-    var $buffer = array();
-    var $close;
-
-    function __construct() {
-        $this->close = false;
-    }
-
-    function write($data) {
-        if ($this->close)
-        new Exception('tried to write to closed stream');
-        $this->buffer[] = $data;
-    }
-
-    function close() {
-        $this->close = true;
-        return implode('', $this->buffer);
-    }
-}
-
-
-
-class H2o_FileLoader {
-    function read($filename) {
-       $filepath = $this->env->searchpath . '/' . $filename;
-       $cache = md5($fn);
-        if (is_file($cache) && (time() - filemtime($cache)) < 3600) {
-            $result = unserialize(file_get_contents($cache));
-            return $result;
-        }
+        self::$filters[$filter] = $callback;
     }
     
-    function write($filename) {
-        file_put_contents($cache, serialize($nodelist));   
+    static function addLookup($callback) {
+        if (is_callable($callback)) {
+            H2o_Context::$lookupTable[] = $callback;
+        } else die('damm it');
+    }
+    
+    static function load($extension, $file = null) {
+        if (!$file) {
+            $file = H2O_ROOT.'ext'.DS.$extension.'.php';
+        }
+        if (is_file($file)) {
+            include_once ($file);
+            self::$extensions[$extension] = $file;
+        }
+    }
+
+    function defaultContext() {
+        return array('h2o' => new H2o_Info);
     }
 }
 
-
-
-/**
- * $type of token, Block | Variable
- */
-class H2o_Token {
-    function __construct ($type, $content, $position) {
-        $this->type = $type;
-        $this->content = $content;
-        $this->result='';
-        $this->position = $position;
-    }
-
-    function write($content){
-        $this->result= $content;
-    }
-}
-
-
-/**
- * a token stream
- */
-class TokenStream  {
-    var $pushed;
-    var $stream;
-    var $closed;
-    var $c;
-
-    function __construct() {
-        $this->pushed = array();
-        $this->stream = array();
-        $this->closed = false;
-    }
-
-    function pop() {
-        if (count($this->pushed))
-        return array_pop($this->pushed);
-        return array_pop($this->stream);
-    }
-
-    function feed($type, $contents, $position) {
-        if ($this->closed)
-            throw new Exception('cannot feed closed stream');
-        $this->stream[] =& new H2o_Token($type, $contents, $position);
-    }
-
-    function push($token) {
-        if (is_null($token))
-            throw new Exception('cannot push NULL');
-        if ($this->closed)
-            $this->pushed[] = $token;
-        else
-            $this->stream[] = $token;
-    }
-
-    function close() {
-        if ($this->closed)
-        new Exception('cannot close already closed stream');
-        $this->closed = true;
-        $this->stream = array_reverse($this->stream);
-    }
-
-    function isClosed() {
-        return $this->closed;
-    }
-
-    function current() {
-        return $this->c ;
-    }
-
-    function next() {
-        return $this->c = $this->pop();
-    }
+function h2o($name, $options = array()) {
+    $instance = new H2o($name, $options);
+    return $instance;
 }
 
 ?>

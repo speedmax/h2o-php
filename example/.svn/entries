@@ -1,0 +1,107 @@
+8
+
+dir
+24
+https://h2o-template.googlecode.com/svn/trunk/example
+https://h2o-template.googlecode.com/svn
+
+
+
+2008-10-24T02:56:37.698668Z
+24
+subjective
+has-props
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+46d78ebc-3749-0410-ba3b-0d0f49807cd4
+
+locale
+dir
+
+ext
+dir
+
+layout.html
+file
+
+
+
+
+2008-10-20T13:45:57.000000Z
+98846bd7b0d9f2327aa5e071fcbe6c3d
+2008-10-20T07:33:44.399251Z
+11
+subjective
+
+trans.tpl
+file
+
+
+
+
+2008-10-27T12:09:19.000000Z
+bd3c53b43b70960b000ef7a88b2dfcc6
+2008-10-24T02:56:37.698668Z
+24
+subjective
+has-props
+
+test.php
+file
+
+
+
+
+2008-10-27T12:09:19.000000Z
+01d663e1239eaf94f28c95e563ad89d5
+2008-10-24T02:56:37.698668Z
+24
+subjective
+has-props
+
+shared
+dir
+
+index.html
+file
+
+
+
+
+2008-10-21T11:34:41.000000Z
+cd348eceb42a7cfb15aafbd661daf7e5
+2008-10-21T03:48:12.717135Z
+16
+subjective
+
+index.php
+file
+
+
+
+
+2008-10-21T11:34:41.000000Z
+44fc127a6892cc8ab4697ba0922683e6
+2008-10-24T02:56:37.698668Z
+24
+subjective
+has-props
+
+
+
+
+index.php.r23
+index.php.r24
+index.php.mine
+

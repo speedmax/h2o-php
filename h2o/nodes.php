@@ -7,16 +7,14 @@ class Node {
     var $position;
 	function __construct($parser, $argstring) {}
 	
-	function render($context, $stream) {
-		$stream->write('');
-	}
+	function render($context, $stream) {}
 }
 
-class NodeList extends Node {
-	var $list;
+class NodeList extends Node implements IteratorAggregate  {
 	var $parser;
+	var $list;
 	
-	function __construct($parser, $initial = null, $position = 0) {
+	function __construct(&$parser, $initial = null, $position = 0) {
 	    $this->parser = $parser;
         if (is_null($initial))
             $initial = array();
@@ -24,8 +22,8 @@ class NodeList extends Node {
         $this->position = $position;
 	}
 
-	function render($context, $stream){
-		foreach($this->list as $node){
+	function render($context, $stream) {
+		foreach($this->list as $node) {
 			$node->render($context, $stream);
 		}
 	}
@@ -41,21 +39,24 @@ class NodeList extends Node {
     function getLength() {
         return count($this->list);
     }
+    
+    public function getIterator() {
+        return new ArrayIterator( $this->list );
+    }
 }
 
 class VariableNode extends Node {
-  private $filters = false;
-  private $variables;
-  
-	function __construct($variables, $filters, $position = 0) {
-	  if (!empty($filters))
-        $this->filters = $filters;
-
-		$this->variables = $variables;
+    private $filters = false;
+    var $variable;
+    
+	function __construct($variable, $filters, $position = 0) {
+        if (!empty($filters))
+            $this->filters = $filters;
+		$this->variable = $variable;
 	}
-	
+
 	function render($context, $stream) {
-		$value = $context->resolve($this->variables[0]);
+        $value = $context->resolve($this->variable);
 		if ($this->filters)
 		  $value = $context->applyFilters($value, $this->filters);
 		$stream->write($value);
@@ -65,6 +66,7 @@ class VariableNode extends Node {
 class CommentNode extends Node {}
 
 class TextNode extends Node {
+    var $content;
 	function __construct($content, $position = 0) {
 		$this->content = $content;
 		$this->position = $position;
@@ -73,8 +75,11 @@ class TextNode extends Node {
 	function render($context, $stream) {
 		$stream->write($this->content);
 	}
+	
+	function is_blank() {
+	    return strlen(trim($this->content));
+	}
 }
 
-class Tag extends Node {}
 
 ?>

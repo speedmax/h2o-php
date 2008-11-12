@@ -1,0 +1,24 @@
+{%	extends "index.html" %}
+
+{% block title %}
+ extended title 
+{% endblock %}
+
+{%	block header %} 
+  <h2> This extended twice nice, very nice! </h2>
+  
+  {% cache 5 timer_here %}
+  	{% now %}
+  {% endcache %}
+  	 
+{%	endblock header %} 
+
+
+{%	block content %} 
+ 	 <h2> Power of inheritance </h2>
+
+  
+      <div style="color:#666">  
+      		  	{{ block.super | wordwrap 50 | linebreaks }}
+      </div>
+{%	endblock content %}

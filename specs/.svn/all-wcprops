@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 28
+/svn/!svn/ver/24/trunk/specs
+END
+spec_helper.php
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/20/trunk/specs/spec_helper.php
+END
+spec.php
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/12/trunk/specs/spec.php
+END
+all_tests.php
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/19/trunk/specs/all_tests.php
+END
+include_spec.php
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/11/trunk/specs/include_spec.php
+END
+context_spec.php
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/24/trunk/specs/context_spec.php
+END
+loader_spec.php
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/11/trunk/specs/loader_spec.php
+END
+h2o_spec.php
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/19/trunk/specs/h2o_spec.php
+END
+inheritance_spec.php
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/11/trunk/specs/inheritance_spec.php
+END
+variable_node_spec.php
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/19/trunk/specs/variable_node_spec.php
+END
+parser_spec.php
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/24/trunk/specs/parser_spec.php
+END
