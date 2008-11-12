@@ -10,7 +10,7 @@ A simple template displaying a list of users, it demonstrate
 - display variables and using build-in tags and filters
 - a basic template inheritance setup contains a layout template and page template
 
-[Show me](simome/)
+[Show me](simple/)
 
 Inheritance
 =====================
