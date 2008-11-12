@@ -30,17 +30,17 @@ class Describe_hash_loader extends SimpleSpec {
     }
 
     function should_read_files_to_loader() {
-        $this->expect($this->h2o->loader->read('layout.html'))->should_be_a('Nodelist');
+        expects($this->h2o->loader->read('layout.html'))->should_be_a('Nodelist');
     }
 
     function should_read_sub_template_in_extends_tag() {
         $this->h2o->loadTemplate('index.html');
-        $this->expect($this->h2o->render())->should_match('/layout text - index text/');
+        expects($this->h2o->render())->should_match('/layout text - index text/');
     }
     
     function should_read_sub_template_in_include_tag() {
         $this->h2o->loadTemplate('index.html');
-        $this->expect($this->h2o->render())->should_match('/page menu/');
+        expects($this->h2o->render())->should_match('/page menu/');
     }
 }
 ?>

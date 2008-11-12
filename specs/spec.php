@@ -37,8 +37,8 @@
  * @license Free for all  
  */
 
-class SimpleSpec extends UnitTestCase {
-    protected $target;
+class SimpleSpec extends UnitTestCase implements ArrayAccess {
+    public $target;
     private $negate;
     private $matcher;
 
@@ -92,6 +92,14 @@ class SimpleSpec extends UnitTestCase {
         }
     }
     
+    function offsetGet($object) {
+        return $this->expect($object);
+    }
+    
+    function offsetSet($key, $value) {}
+    function offsetExists($key) {}
+    function offsetUnset($key) {}
+    
     function expect($object) {
         $this->target = $object;
         return $this;
@@ -122,6 +130,41 @@ class SimpleSpec extends UnitTestCase {
     function getAssertionLine() {
         $trace = new SimpleStackTrace(array('should', 'it_should', 'assert', 'expect', 'pass', 'fail', 'skip'));
         return $trace->traceMethod();
+    }
+}
+
+function expects($subject) {
+    $trace = debug_backtrace();
+    $object = $trace[1]['object'];
+    return $object->expect($subject);
+}
+
+class SpecProxy {
+    function __construct($class) {
+        $this->object = new $class;
+    }
+    
+    function __call($method, $args) {
+        return user_call_func_array(array($this->object, $method), $args);
+    }
+}
+
+
+class Have_Matcher {
+    function __construct($subject, $count, $runtime) {
+        $this->subject = $subject;
+        $this->count = $count;
+        $this->runtime = $this->runtime;
+    }
+    
+    function __get($key) {
+        $object = $runtime->target;
+        
+        if (is_array($object) && isset($object[$this->subject]))
+            $subject = $object[$this->subject];
+        elseif (is_object($object) && isset($object->{$this->subject}))
+            $subject = $object->{$this->subject};
+        return $this->runtime->be(count($subject), $this->count);
     }
 }
 
@@ -244,7 +287,28 @@ class SpecMatcher {
         }
     }
     
+    function have($target, $count, $key, $messages = '%s') {
+        $dumper = new SimpleDumper();
+        $subject = null;
+        
+        if (is_array($target) && isset($target[$key]))
+            $subject = $target[$key];
+        elseif (is_object($target) && isset($target->$key)) 
+            $subject = $target->$key;
+        
+        $result = count($subject);
+        $messages = "Expecting count for [$key] should be [$count], got [$result]";
+
+        return $this->be($result, $count, $messages);
+    } 
+    
     function match($subject, $pattern, $message = '%s') {
+        $regex = "/^[\/{#](.*)[\/}#][imsxeADSUXJu]*/sm";
+
+        if (preg_match($regex, $subject)) {
+            list($subject, $pattern) = array($pattern, $subject);
+        }
+
         return $this->runtime->assert(
                 new PatternExpectation($pattern),
                 $subject,

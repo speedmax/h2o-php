@@ -2,7 +2,7 @@
 
 h2o::addTag('lorem');
 
-class Lorem_Tag extends Tag {
+class Lorem_Tag extends H2o_Node {
     private $common = true;
     private $syntax = '/^(\d+)?(?:\s+(p|w))?(?:\s?(random))?$/i';
     var $hint = "{% lorem [count] [format] [random]%}";

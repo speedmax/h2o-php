@@ -3,29 +3,28 @@ class Describe_Template extends SimpleSpec {
 
     function should_be_able_to_create_from_string() {
         $result = h2o::parseString("<h1>{{ a }}</h1>")->render(array('a'=>'hello world'));
-        $this->expect($result)->should_be("<h1>hello world</h1>");
+        expects($result)->should_be("<h1>hello world</h1>");
     }
 }
 
 # x tag for testing
-class Sample_Tag extends Tag {}
+class Sample_Tag extends H2o_Node {}
 
 class Describe_h2o_tag_registration extends SimpleSpec {
     function should_be_pre_registered_with_default_tags() {
         foreach (w('Block_Tag,Extends_Tag,Include_Tag,If_Tag,For_Tag,With_Tag') as $tag) {
-            $this->expect(h2o::$tags)->should_contain($tag);
+            expects(h2o::$tags)->should_contain($tag);
         }
     }
 
     function should_be_able_to_register_a_new_tag() {
-        
         h2o::addTag('sample', 'Sample_Tag');        
-        $this->expect(h2o::$tags)->should_contain('Sample_Tag');
+        expects(h2o::$tags)->should_contain('Sample_Tag');
         unset(h2o::$tags['sample']);
 
 
         h2o::addTag('sample');
-        $this->expect(h2o::$tags)->should_contain('Sample_Tag');
+        expects(h2o::$tags)->should_contain('Sample_Tag');
         unset(h2o::$tags['sample']);
     }
     
@@ -34,16 +33,16 @@ class Describe_h2o_tag_registration extends SimpleSpec {
             'sample'=>'Sample_Tag', 
             's'=>'Sample_Tag'
         ));
-        $this->expect(h2o::$tags)->should_contain('Sample_Tag');
-        $this->expect(isset(h2o::$tags['s']))->should_be_true();
+        expects(h2o::$tags)->should_contain('Sample_Tag');
+        expects(isset(h2o::$tags['s']))->should_be_true();
         unset(h2o::$tags['sample'], h2o::$tags['s']);
         
         h2o::addTag(array(
             'sample', 
             's'=>'Sample_Tag'
         ));
-        $this->expect(h2o::$tags)->should_contain('Sample_Tag');
-        $this->expect(isset(h2o::$tags['s']))->should_be_true();
+        expects(h2o::$tags)->should_contain('Sample_Tag');
+        expects(isset(h2o::$tags['s']))->should_be_true();
         unset(h2o::$tags['sample'], h2o::$tags['s']);
     }
 
@@ -65,30 +64,30 @@ class Describe_h2o_filter_registration extends SimpleSpec {
         $filters = array_keys(h2o::$filters);
         
         # Safe Native php functions as filter
-        $this->expect($filters)->should_contain(
+        expects($filters)->should_contain(
             w('md5, sha1, join, wordwrap, trim, upper, lower')
         );
         
         # All core filters
-        $this->expect($filters)->should_contain(get_class_methods('CoreFilters'));
+        expects($filters)->should_contain(get_class_methods('CoreFilters'));
         
         # All Html Filters
-        $this->expect($filters)->should_contain(get_class_methods('HtmlFilters'));
+        expects($filters)->should_contain(get_class_methods('HtmlFilters'));
         
         # All StringFilters
-        $this->expect($filters)->should_contain(get_class_methods('StringFilters'));
+        expects($filters)->should_contain(get_class_methods('StringFilters'));
         
         # All NumberFilters
-        $this->expect($filters)->should_contain(get_class_methods('NumberFilters'));
+        expects($filters)->should_contain(get_class_methods('NumberFilters'));
         
         # All DatetimeFilters
-        $this->expect($filters)->should_contain(get_class_methods('DatetimeFilters'));
+        expects($filters)->should_contain(get_class_methods('DatetimeFilters'));
     }
     
     function should_be_able_to_register_a_filter() {   
         h2o::addFilter('sample_filter');
         $result= h2o::parseString('{{ something | sample_filter }}')->render();
-        $this->expect($result)->should_be('i am a filter');
+        expects($result)->should_be('i am a filter');
     }
     
     function should_be_able_to_register_a_filter_collection() {

@@ -1,19 +1,9 @@
 <?php
-
 print_r(memory_get_usage());
 include '../h2o.php';
 h2o::load('i18n');
-
 //// Set language to German
 
-<<<<<<< .mine
-$i18n = new H2o_I18n(dirname(__FILE__).DS, array(
-));
-$i18n->setLocale('fr');
-
-$i18n->extract();
-$i18n->compile();
-=======
 //$i18n = new H2o_I18n(dirname(__FILE__).DS, array(
 //    'gettext_path' => dirname(__FILE__).DS.'bin/gettext/bin/' 
 //));
@@ -21,7 +11,6 @@ $i18n->compile();
 //
 //$i18n->extract();
 //$i18n->compile();
->>>>>>> .r24
 ////
 // Choose domain
 //extract_translations(

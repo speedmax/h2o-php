@@ -133,7 +133,7 @@ class H2o_Parser {
                     $current_buffer[] = array();
 
                 $namedArgs =& $current_buffer[count($current_buffer) - 1]; 
-                list($name,$value) = array_map('trim', explode(':',$data));
+                list($name,$value) = array_map('trim', explode(':', $data, 2));
                 $namedArgs[$name] = $value;
             }
             elseif( $token == 'operator') {

@@ -3,14 +3,14 @@
 		Nodes
 */
 
-class Node {
+class H2o_Node {
     var $position;
 	function __construct($parser, $argstring) {}
 	
 	function render($context, $stream) {}
 }
 
-class NodeList extends Node implements IteratorAggregate  {
+class NodeList extends H2o_Node implements IteratorAggregate  {
 	var $parser;
 	var $list;
 	
@@ -45,7 +45,7 @@ class NodeList extends Node implements IteratorAggregate  {
     }
 }
 
-class VariableNode extends Node {
+class VariableNode extends H2o_Node {
     private $filters = false;
     var $variable;
     
@@ -63,9 +63,9 @@ class VariableNode extends Node {
 	}
 }
 
-class CommentNode extends Node {}
+class CommentNode extends H2o_Node {}
 
-class TextNode extends Node {
+class TextNode extends H2o_Node {
     var $content;
 	function __construct($content, $position = 0) {
 		$this->content = $content;

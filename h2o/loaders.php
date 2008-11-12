@@ -31,10 +31,7 @@ class H2o_File_Loader extends H2o_Loader {
 
     function setOptions($options = array()) {
         if (isset($options['cache']) && $options['cache']) {
-            $className = "H2o_".ucwords($options['cache'])."_Cache";
-            if (class_exists($className)) {
-                $this->cache = new $className($options);
-            }
+            $this->cache = h2o_cache($options);
         }
     }
     
@@ -126,6 +123,16 @@ function hash_loader($hash = array()) {
  *
  */
 
+function h2o_cache($options = array()) {
+    $type = $options['cache'];
+    $className = "H2o_".ucwords($type)."_Cache";
+
+    if (class_exists($className)) {
+        return new $className($options);
+    }
+    return false;
+}
+
 class H2o_File_Cache {
     var $ttl = 3600;
     var $prefix = 'h2o_';
@@ -150,6 +157,7 @@ class H2o_File_Cache {
 
         $content = file_get_contents($this->path . $this->prefix. $filename);
         $expires = (int)substr($content, 0, 10);
+
         if (time() >= $expires) 
             return false;
         return unserialize(trim(substr($content, 10)));

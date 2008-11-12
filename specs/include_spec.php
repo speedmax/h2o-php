@@ -18,15 +18,15 @@ class Describe_include_tag extends SimpleSpec {
     function should_include_SubTemplate() {
         $h2o = new H2o('_header.html', $this->option);
         $result = $h2o->render();
-        $this->expect($result)->should_match('/page menu/');
+        expects($result)->should_match('/page menu/');
     }
     
     function should_be_able_to_include_in_nested_fashion() {
         $h2o = new H2o('page.html', $this->option);
         $result = $h2o->render();
-        $this->expect($result)->should_match('/layout text/');
-        $this->expect($result)->should_match('/Page footer/');
-        $this->expect($result)->should_match('/page menu/');
+        expects($result)->should_match('/layout text/');
+        expects($result)->should_match('/Page footer/');
+        expects($result)->should_match('/page menu/');
     }
 }
 

@@ -32,7 +32,7 @@ class H2o {
             'loader'            =>       'file',
             'cache'             =>      'file',     // file | apc | memcache
             'cache_ttl'         =>      3600,     // file | apc | memcache
-            'searchpath'       =>      false,
+            'searchpath'        =>      false,
   
             // Enviroment setting
             'BLOCK_START'       =>      '{%',
@@ -41,7 +41,7 @@ class H2o {
             'VARIABLE_END'      =>      '}}',
             'COMMENT_START'     =>      '{*',
             'COMMENT_END'       =>      '*}',
-            'TRIM_TAGS'     => true
+            'TRIM_TAGS'         =>      true
         ), $options);
     }
     
@@ -99,7 +99,7 @@ class H2o {
         if (is_object($context) && $context instanceof H2o_Context) {
             $this->context = $context;
         } else {
-            $this->context = new H2o_Context($context);
+            $this->context = new H2o_Context($context, $this->options);
         }
 
         $this->stream = new StreamWriter;

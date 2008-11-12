@@ -3,8 +3,7 @@ h2o::addTag('trans');
 h2o::addTag('blocktrans');
 h2o::addLookup(array('H2o_I18n', 'gettext'));
 
-
-class Trans_Tag extends Tag {
+class Trans_Tag extends H2o_Node {
     var $text = null;
     function __construct($argstring, $parser, $position = 0) {
         $this->text = stripcslashes(substr($argstring, 1, -1));
@@ -17,7 +16,7 @@ class Trans_Tag extends Tag {
     }
 }
 
-class Blocktrans_Tag extends Tag {
+class Blocktrans_Tag extends H2o_Node {
     private $singular, $plural;
     private $vars = array();
     private $aliases = array();

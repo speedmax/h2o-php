@@ -10,10 +10,13 @@ class H2o_Context implements ArrayAccess {
     private $arrayMethods = array('first'=> 0, 'last'=> 1, 'length'=> 2, 'size'=> 3);
     static $lookupTable = array();
     
-    function __construct($context = array()){
+    function __construct($context = array(), $options = array()){
         if (is_object($context))
            $context = get_object_vars($context);
         $this->scopes = array($context);
+        
+        if (isset($options['safeClass'])) 
+            $this->safeClass = array_merge($this->safeClass, $options['safeClass']);
     }
 
     function push($layer = array()){
@@ -80,22 +83,24 @@ class H2o_Context implements ArrayAccess {
         # Lookup basic types, null, boolean, numeric and string
         # Variable starts with : (:users.name) to short-circuit lookup
         if ($name[0] === ':') {
-            return $this->getVariable(substr($name, 1));
+            $object =  $this->getVariable(substr($name, 1));
+            if (!is_null($object)) return $object;
+        } else {
+            if ($name === 'true') {
+                return true;
+            }
+            elseif ($name === 'false') {
+                return false;
+            } 
+            elseif (preg_match('/^-?\d+(\.\d+)?$/', $name, $matches)) {
+                return isset($matches[1])? floatval($name) : intval($name);
+            }
+            elseif (preg_match('/^"([^"\\\\]*(?:\\.[^"\\\\]*)*)"|' .
+                           '\'([^\'\\\\]*(?:\\.[^\'\\\\]*)*)\'$/', $name)) {            
+                return stripcslashes(substr($name, 1, -1));
+            }
         }
-        elseif ($name === 'true') {
-            return true;
-        }
-        elseif ($name === 'false') {
-            return false;
-        } 
-        elseif (preg_match('/^-?\d+(\.\d+)?$/', $name, $matches)) {
-            return isset($matches[1])? floatval($name) : intval($name);
-        }
-        elseif (preg_match('/^"([^"\\\\]*(?:\\.[^"\\\\]*)*)"|' .
-                       '\'([^\'\\\\]*(?:\\.[^\'\\\\]*)*)\'$/', $name)) {            
-            return stripcslashes(substr($name, 1, -1));
-        }
-        elseif (!empty(self::$lookupTable)) {
+        if (!empty(self::$lookupTable)) {
             return $this->externalLookup($name);
         }
         return null;
@@ -112,7 +117,7 @@ class H2o_Context implements ArrayAccess {
 
         # Lookup context
         foreach ($parts as $part) {
-            if (is_array($object)) {
+            if (is_array($object) or $object instanceof ArrayAccess) {
                 if (isset($object[$part]))
                     $object = $object[$part]; 
                 # Support array short cuts

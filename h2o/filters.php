@@ -2,8 +2,8 @@
 
 class FilterCollection {};
 
-class CoreFilters extends FilterCollection {
 
+class CoreFilters extends FilterCollection {
     function first($value) {
         return $value[0];
     }
@@ -36,9 +36,8 @@ class CoreFilters extends FilterCollection {
     }
  
     function urlize($url, $truncate = false) {
-        if (preg_match('/^(http|https|ftp:\/\/([^\s"\']+))/i', $url, $match)) {
+        if (preg_match('/^(http|https|ftp:\/\/([^\s"\']+))/i', $url, $match))
             $url = "<a href='{$url}'>". ($truncate ? truncate($url,$truncate): $url).'</a>';
-        }
         return $url;
     }
 
@@ -165,30 +164,40 @@ class NumberFilters extends FilterCollection {
 }
 
 class HtmlFilters extends FilterCollection {
-
-    function image_tag($url, $attribute='') {
-        return sprintf('<img src="%s" %s>', $url, $attribute);
+    function base_url($url, $options = array()) {
+        return $url;
     }
     
-    function css_tag($url,$rel = 'stylesheet'){
-        return sprintf('<link href="%s" rel="%s" type="text/css"  media="all" />', $url, $rel);
+    function asset_url($url, $options = array()) {
+        return self::base_url($part, $options);
+    }
+    
+    function image_tag($url, $options = array()) {
+        $attr = self::htmlAttribute(array('alt','width','height','border'), $options);
+        return sprintf('<img src="%s" %s/>', $url, $attr);
+    }
+
+    function css_tag($url, $options = array()) {
+        $attr = self::htmlAttribute(array('media'), $options);
+        return sprintf('<link rel="stylesheet" href="%s" type="text/css" %s />', $url, $attr);
     }
 
     function script_tag($url) {
         return sprintf('<script src="%s" type="text/javascript"></script>', $url);
     }
     
-    function links ($text, $url, $attr = array() ) {
-        return sprintf('<a href="%s">%s</a>', $url, $text);
+    function links_to($text, $url, $options = array()) {
+        $attrs = self::htmlAttribute(array('ref'), $options);
+        $url = self::base_url($url, $options);
+        return sprintf('<a href="%s" %s>%s</a>', $url, $attrs, $text);
     }
     
-    function links_with ($url, $text, $attribute = '') {
-        return self::links($text, $url, $attribute);
+    function links_with ($url, $text, $attr = array()) {
+        return self::links($text, $url, $attr);
     }
     
     function strip_tags($text) {
-        $text = preg_replace('/</',' <',$text);
-        $text = preg_replace('/>/','> ',$text);
+        $text = preg_replace(array('/</', '/>/'), array(' <', '> '),$text);
         return strip_tags($text);
     }
 
@@ -211,34 +220,23 @@ class HtmlFilters extends FilterCollection {
         return implode("\n", $result);
     }
 
-    function highlight($source, $line = 0) {
-        $replace = array(
-            // html tags
-            "/(&lt;\/?.*?&gt;)(.*?)?(&lt;\/?.*?&gt;)?/m"
-            =>'<span style="color:#aaa">$1$2$3</span>',
-            // h2o keywords
-            '/({%.*?)(block|endblock|for|endfor|if|endif|else|with|endwith|include|extends|debug)\s+?([A-Za-z0-9.-_]*).*?/'
-            => '$1<b style="color:#9c0">$2</b> <b style="color:#40FFFF">$3</b>',
-            // quotes
-            '/((:?&quot;|\')(:?.*)?(:?&quot;|\'))/m'
-            => '<span style="color:orange">$1</span>',
-            // h2o variable
-            '/({{.*?)\s+?([A-Za-z0-9.-_]*)[^|}]*?/'
-            => '$1 <b style="color:#40FFFF">$2</b>',
-            // h2o variable/tag node
-            '/({{|}}|{%|%})/m'          => "<b style='color:#EDF080'>$1</b>",
-        );
-
-        $source = preg_replace(array_keys($replace), $replace, $source);
-        $src = preg_split('/\r?\n/', $source);
+    private static function htmlAttribute($attrs = array(), $data = array()) {
+        $attrs = self::extract(array_merge(array('id', 'class', 'title', "style"), $attrs), $data);
         
-        $output ='<ol class="highlight" start="'.$line.'">';
-        foreach ($src as $number=> $code) {
-            $stlye = $number % 2 == 1 ? 'style="background:#262626""' : '';
-            $output .= "<li $stlye>$code</li>";
+        $result = array();
+        foreach ($attrs as $name => $value) {
+            $result[] = "{$name}=\"{$value}\"";
         }
-        $output .= '</ol>';
-        return ($output);
+        return join(' ', $result);
+    }
+
+    private static function extract($attrs = array(), $data=array()) {
+        $result = array();
+        if (empty($data)) return array();
+        foreach($data as $k => $e) {
+            if (in_array($k, $attrs)) $result[$k] = $e;
+        }
+        return $result;
     }
 }
 
@@ -279,7 +277,6 @@ class DatetimeFilters extends FilterCollection {
         $time = strtotime($time);
         $today = strtotime(date('M j, Y'));
         $reldays = ($time - $today)/86400;
-        
         if ($reldays >= 0 && $reldays < 1) {
             return 'today';
         } else if ($reldays >= 1 && $reldays < 2) {
@@ -298,16 +295,16 @@ class DatetimeFilters extends FilterCollection {
             }
         }
         if (abs($reldays) < 182) {
-            return date('l, F j',$time ? $time : CURRENT_TIME);
+            return date('l, F j',$time ? $time : time());
         } else {
-            return date('l, F j, Y',$time ? $time : CURRENT_TIME);
+            return date('l, F j, Y',$time ? $time : time());
         }
     }
     
     function relative_datetime($time) {
-        $date = relative_date($time);
+        $date = self::relative_date($time);
         if ($date == 'today') {
-            return relative_time($time);
+            return self::relative_time($time);
         }
         return $date;
     }
@@ -318,5 +315,8 @@ h2o::addFilter(array('md5', 'sha1', 'wordwrap', 'trim', 'upper' => 'strtoupper',
 
 /* Add filter collections */
 h2o::addFilter(array('CoreFilters', 'StringFilters', 'NumberFilters', 'DatetimeFilters', 'HtmlFilters'));
+
+/* Alias default to set_default */
+h2o::addFilter('default', array('CoreFilters', 'set_default'));
 
 ?>

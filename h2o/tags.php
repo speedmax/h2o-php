@@ -5,11 +5,7 @@
  * @todo tags need more test coverage
  */
 
-class Tag extends Node {
-    var $position = 0;
-}
-
-class If_Tag extends Tag {
+class If_Tag extends H2o_Node {
     var $body;
     var $else;
     var $negate;
@@ -45,7 +41,7 @@ class If_Tag extends Tag {
     }
 }
 
-class For_Tag extends Tag {
+class For_Tag extends H2o_Node {
     public $position;
     private $iteratable, $key, $item, $body, $else;
     private $syntax = '{
@@ -70,11 +66,13 @@ class For_Tag extends Tag {
         if (!$this->item) {
             list($this->key, $this->item) = array($this->item, $this->key);
         }
+        $this->iteratable = symbol($this->iteratable);
         $this->reversed = (bool) $this->reversed;
     }
 
     function render($context, $stream) {
-        $iteratable = $context->getVariable($this->iteratable);
+        $iteratable = $context->resolve($this->iteratable);
+        
         if ($this->reversed)
             $iteratable = array_reverse($iteratable);
         $length = count($iteratable);
@@ -95,8 +93,8 @@ class For_Tag extends Tag {
                     'parent' => $parent,
                     'first' => $idx === 0, 
                     'last'  => $rev_count === 1,
-                    'odd'	=> !$is_even,
-                    'even'	=> $is_even,
+                    'odd'   => !$is_even,
+                    'even'  => $is_even,
                     'length' => $length,
                     'counter' => $idx + 1,
                     'counter0' => $idx,
@@ -112,7 +110,7 @@ class For_Tag extends Tag {
     }
 }
 
-class Block_Tag extends Tag {
+class Block_Tag extends H2o_Node {
     public $name;
     public $position;
     public $stack;
@@ -151,7 +149,7 @@ class Block_Tag extends Tag {
     }
 }
 
-class Extends_Tag extends Tag {
+class Extends_Tag extends H2o_Node {
     public $filename;
     public $position;
     public $nodelist;
@@ -159,35 +157,35 @@ class Extends_Tag extends Tag {
     
     function __construct($argstring, $parser, $position = 0) {
       if (!$parser->first)
-		    throw new TemplateSyntaxError('extends must be first in file');
+            throw new TemplateSyntaxError('extends must be first in file');
 
       if (!preg_match($this->syntax, $argstring))
-		    throw new TemplatesyntaxError('filename must be quoted');
+            throw new TemplatesyntaxError('filename must be quoted');
 
-		$this->filename = stripcslashes(substr($argstring, 1, -1));
+        $this->filename = stripcslashes(substr($argstring, 1, -1));
 
         # Parse the current template
         $parser->parse();
 
-		# Parse parent template
-		$this->nodelist = $parser->runtime->loadSubTemplate($this->filename, $parser->options);
+        # Parse parent template
+        $this->nodelist = $parser->runtime->loadSubTemplate($this->filename, $parser->options);
         $parser->storage['templates'] = array_merge(
             $parser->storage['templates'], $this->nodelist->parser->storage['templates']
         );
         $parser->storage['templates'][] = $this->filename;
         
-		if (!isset($this->nodelist->parser->storage['blocks']) || !isset($parser->storage['blocks']))
-		    return ;
+        if (!isset($this->nodelist->parser->storage['blocks']) || !isset($parser->storage['blocks']))
+            return ;
 
-		# Blocks of parent template
-		$blocks =& $this->nodelist->parser->storage['blocks'];
+        # Blocks of parent template
+        $blocks =& $this->nodelist->parser->storage['blocks'];
 
-		# Push child blocks on top of parent blocks
-		foreach($parser->storage['blocks'] as $name => &$block) {
-		    if (isset($blocks[$name])) {
-		        $blocks[$name]->addLayer($block);
-		    }
-		}
+        # Push child blocks on top of parent blocks
+        foreach($parser->storage['blocks'] as $name => &$block) {
+            if (isset($blocks[$name])) {
+                $blocks[$name]->addLayer($block);
+            }
+        }
     }
     
     function render($context, $stream) {
@@ -195,7 +193,7 @@ class Extends_Tag extends Tag {
     }
 }
 
-class Include_Tag extends Tag {
+class Include_Tag extends H2o_Node {
     private $nodelist;
     private $syntax = '/^["\'](.*?)["\']$/';
     
@@ -216,7 +214,7 @@ class Include_Tag extends Tag {
     }
 }
 
-class With_Tag extends Tag {
+class With_Tag extends H2o_Node {
     public $position;
     private $variable, $shortcut;
     private $nodelist;
@@ -240,7 +238,7 @@ class With_Tag extends Tag {
     }
 }
 
-class Cycle_Tag extends Tag {
+class Cycle_Tag extends H2o_Node {
     private $uid;
     private $sequence;
     
@@ -265,7 +263,7 @@ class Cycle_Tag extends Tag {
     }
 }
 
-class Load_Tag extends Tag {
+class Load_Tag extends H2o_Node {
     static $searchpath = array(H2O_ROOT);
     var $extension;
     
@@ -304,5 +302,37 @@ class Load_Tag extends Tag {
     }
 }
 
-H2o::addTag(array('block', 'extends', 'include', 'if', 'for', 'with', 'cycle', 'load'));
+class Debug_Tag extends H2o_Node {
+    private $argument;
+    function __construct($argstring, $parser, $pos = 0) {
+        $this->argument = $argstring;
+    }
+    
+    function render($context, $stream) {
+        if ($this->argument) {
+            $object = $context->resolve(symbol($this->argument));
+        } else {
+            $object = $context->scopes[0];
+        }
+        $output = "<pre>". print_r($object, true). "</pre>";
+        $stream->write($output);
+    }
+}
+
+class Now_Tag extends H2o_Node {
+    function __construct($argstring, $parser, $pos=0) {
+        $this->format = $argstring;
+        if (!$this->format) {
+            $this->format = "D M j G:i:s T Y";
+        }
+    }
+    
+    function render($contxt, $stream) {
+        sleep(1);
+        $time = date($this->format);
+        $stream->write($time);
+    }
+}
+
+H2o::addTag(array('block', 'extends', 'include', 'if', 'for', 'with', 'cycle', 'load', 'debug', 'now'));
 ?>

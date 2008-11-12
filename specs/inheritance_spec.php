@@ -26,13 +26,13 @@ class Describe_H2o_block_tag extends SimpleSpec {
 
     function should_render_template_content() {
         $h2o = new H2o('page.html', $this->option);
-        $this->expect($h2o->render())->should_be('page body');
+        expects($h2o->render())->should_be('page body');
 
         $h2o->loadTemplate('layout.html');
-        $this->expect($h2o->render())->should_be('header,body,footer');
+        expects($h2o->render())->should_be('header,body,footer');
         
         $h2o->loadTemplate('nested');
-        $this->expect($h2o->render())->should_be('h2o template rocks so hard !');
+        expects($h2o->render())->should_be('h2o template rocks so hard !');
     }
 }
 
@@ -42,11 +42,11 @@ class Describe_h2o_extends_tag extends SimpleSpec {
     }
     function should_render_inherited_template() {
         $h2o = new H2o('inherited.html', $this->option);
-        $this->expect($h2o->render())->should_be("header,extended body,footer");
+        expects($h2o->render())->should_be("header,extended body,footer");
         
         # extend nested blocks
         $h2o->loadTemplate('nested_inherit');
-        $this->expect($h2o->render())->should_be('h2o template rocks so hard ! and plays so hard');
+        expects($h2o->render())->should_be('h2o template rocks so hard ! and plays so hard');
     }
 }
 
@@ -61,26 +61,26 @@ class Describe_h2o_block_variable extends SimpleSpec {
     }
     function should_output_name_of_block() {
         $h2o = new h2o('page', $this->option);
-        $this->expect($h2o->render())->should_be('body');
+        expects($h2o->render())->should_be('body');
         
         $h2o->loadTemplate('blog');
-        $this->expect($h2o->render())->should_be('depth: 1');
+        expects($h2o->render())->should_be('depth: 1');
         
         $h2o->loadTemplate('home');
-        $this->expect($h2o->render())->should_be('depth: 2- parent content, depth: 1- child content');
+        expects($h2o->render())->should_be('depth: 2- parent content, depth: 1- child content');
     }
     
     function should_display_correct_block_depth_level() {
         $h2o = new h2o('blog', $this->option);
-        $this->expect($h2o->render())->should_be('depth: 1');
+        expects($h2o->render())->should_be('depth: 1');
         
         $h2o->loadTemplate('home');
-        $this->expect($h2o->render())->should_match('/depth: 2/');
+        expects($h2o->render())->should_match('/depth: 2/');
     }
     
     function should_be_able_to_output_parent_template_using_blog_super() {
         $h2o = new h2o('home', $this->option);
-        $this->expect($h2o->render())->should_be(
+        expects($h2o->render())->should_be(
             'depth: 2- parent content, depth: 1- child content'
         );
     }

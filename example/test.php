@@ -1,18 +1,15 @@
 <?php
-    require '../h2o.php';
-    require H2O_ROOT.'h2o/parser.php';
-    
-    H2O_RE::init();
-    
+if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    $ipaddr = preg_replace('/,.*/', '', $_SERVER['HTTP_X_FORWARDED_FOR']);
+} else {
+    if (isset($_SERVER['HTTP_CLIENT_IP'])) {
+        $ipaddr = $_SERVER['HTTP_CLIENT_IP'];
+    } else {
+        $ipaddr = $_SERVER['REMOTE_ADDR'];
+    }
+}
+echo $ipaddr;
 
-    $regex = 'un';
-    $str = "marry needs a bag";
-    $b = '/bag/ixs';
-    $c = '{bag}';
-    var_dump(H2O_RE::$named_args, preg_match(H2O_RE::$name, "something.something.0"));
-    var_dump(H2O_RE::$named_args, preg_match(H2O_RE::$named_args, "something: 2.1"));
-    var_dump(H2O_RE::$named_args, preg_match(H2O_RE::$named_args, "something: variable"));
-    
 die;
 
 $a = array('name' => 'variable');
