@@ -1,12 +1,9 @@
 H2O template markup
 ========================
 
-Please download from 
-
- * [Google code][google code]
 
 
-Intro
+H2o template
 ------------------------
 H2O is markup language for PHP that taken a lot of inspiration from django.
 
@@ -26,19 +23,37 @@ Requirement
 Getting started
 ------------------------
 
-### Download
- * [Google code][google code]
- * [Github][github]
+### Getting h2o
 
- [google code]: http://code.google.com/p/h2o-template/downloads
- [github]: http://github.com/speedmax/h2o-php
+Download
+
+[<img src="http://github.com/images/modules/download/zip.png">](http://code.google.com/p/h2o-template/downloads)
+ 
+With Git
+
+`git clone http://github.com/speedmax/h2o-php.gif`
+
+With SVN 
+
+`svn checkout http://h2o-template.googlecode.com/svn/trunk/ h2o`
+
 
 ### Installation
- 1. Download and extract the source code to a desired path
- 2. use `require 'h2o.php'` statement to include h2o library
- 3. Here is the quick start and head to the example directory
+ 1. Download and extract h2o in your project path or your php include path
  
-*index.html*
+ Sample setup
+
+    myawesome_app/         
+        index.php           
+        templates/          
+        index.html
+        h2o/                
+
+ 2. use `require 'h2o/h2o.php'` in your php statement to include h2o library
+ 3. Below is a quick start code example to get a kick start 
+ 3. checkout example and specs if you are in the mood for exploration. 
+ 
+*templates/index.html*
 
     <body>
         <head><title>Hello world</title></head>
@@ -47,34 +62,14 @@ Getting started
         </body>
     </body>
 
-*in PHP*
+*index.php*
 
     <?php
-        require 'h2o.php';
+        require 'h2o/h2o.php';
         $h2o = new h2o('index.html');
-        $h2o->render(array('name'=>'Peter Jackson'));
+        echo $h2o->render(array('name'=>'Peter Jackson'));
     ?>
 
-
-### Configuration
-There are a few configurable can pass-in as a optional array during h2o 
-initialization.
-
-    <?php
-        $h2o = new H2o('template.tpl', array(
-            [option_name] => [option_value]
-        ));
-    ?>
-        
-### Options
-
- - **loader** -  name of loader or a instance of H2o_Loader, [defaults 'file']
- - **searchpath** - search path h2o uses to load additional templates
- - **cache** - define type of caching engine h2o needs to use, set to false to 
-    disable caching [defaults 'file']
- - **cache_dir** - path to store cached template objects [default same as searchpath]
- - **cache_ttl** - time to live value for cache
-   
 
 Syntax explanation
 ------------------------
@@ -239,6 +234,88 @@ template inheritance h2o work exactly the same way.
 * block gives you a hook, especially useful they are useful for javascript, css
   too
 * When defining a block use a short and distinctive name
+
+
+
+### Configuration
+There are a range of option to set up the template system the way you want it.
+
+    <?php
+        $h2o = new H2o('template.tpl', array(
+            [option_name] => [option_value]
+        ));
+    ?>
+
+#### loader
+name of loader or a instance of H2o_Loader
+
+__Use file loader [default]__
+
+` $template = new H2o('index.html', array('loader'=>'file'); `
+
+
+__Advance setup__
+    <?php
+    $loader = new H2o_File_Loader($custom_searchpath);
+    $template = new H2o('index.html', array('loader'=> $loader );
+    ?>
+    
+__Use dictionary loader__
+
+You may want to load template from other resource than file then this will be your
+friend. h2o use `dict_loader()` for testing.
+
+    <?php
+        $loader = dict_loader(array(
+            "index.html" => 'Hello {{ person }}'
+        ));
+        $template = new H2o('index.html', array('loader' => $loader'));
+    ?> 
+
+#### searchpath
+
+default: this will be the base path of your template
+
+h2o use this path to load additional templates and extensions. 
+
+You can either explicity set the search path
+
+`$template = new H2o('index.html', array('searchpath' => '/sites/common_templates'));`
+
+or It will try to find the searchpath for you
+
+`$template = new H2o('/sites/common_templates/index.html');`
+
+#### cache
+define type of caching engine h2o needs to use, set to false to disable 
+caching, you can read more about performance and caching in following sections
+
+use file cache [default]
+
+`$template = new H2o('index.html', array('cache'=>'file'));`
+
+use apc cache
+
+`$template = new H2o('index.html', array('cache'=>'apc'));`
+
+memcache module not implemented yet
+
+disable caching
+
+`$template = new H2o('index.html', array('cache'=>false));`
+
+#### cache_dir
+When file cache is used, you can define where you want templates to be cached. 
+
+it will put cached template in same location as that template
+
+`$template = new H2o('index.html', array('cache_dir'=>'/tmp/cached_templates'));`
+
+#### cache_ttl
+how long template cache will be lived (defaults: 1 hour), template fregment cache that is bundled
+in cache extension will use this as default ttl value.
+
+`$template = new H2o('index.html', array('cache_ttl' => 3600));`
 
 
 Performance and Caching
