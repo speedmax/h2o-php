@@ -13,9 +13,9 @@ H2O is markup language for PHP that taken a lot of inspiration from django.
  * Readable and human friendly syntax.
  * Easy to use and maintain
  * Encourage reuse in templates by template inclusion and inheritance.
- * higly extensible through filters, tags and template extensions.
- * Bundled rich set of filters and tags for string formatting, html helpers and 
-   internationlization. 
+ * highly extensible through filters, tags and template extensions.
+ * Bundled rich set of filters and tags for string formatting, HTML helpers and 
+   internationalization. 
 
 Requirement
 ------------------------
@@ -52,12 +52,12 @@ Getting started
     <?php
         require 'h2o.php';
         $h2o = new h2o('index.html');
-        $h2o->render(array('name'=>'Peter jackson'));
+        $h2o->render(array('name'=>'Peter Jackson'));
     ?>
 
 
 ### Configuration
-There are a few configurables can pass-in as a optional array during h2o 
+There are a few configurable can pass-in as a optional array during h2o 
 initialization.
 
     <?php
@@ -76,7 +76,7 @@ initialization.
  - **cache_ttl** - time to live value for cache
    
 
-Syntax explaination
+Syntax explanation
 ------------------------
 
 ## variable
@@ -101,13 +101,13 @@ Use dot (.) to access attribute of a variable
     <?php 
         $h2o = new H2o('template.tpl');
         $person =array(
-                'name' => 'Peter jackson', 'age' => 25
+                'name' => 'Peter Jackson', 'age' => 25
         );
         $h2o->render(compact('person'));
     ?>
     
 Let's say you have assigned a person variable in your php script, following 
-variable tag will print out `Peter jackson`
+variable tag will print out `Peter Jackson`
 
 ## Filters
 
@@ -117,15 +117,15 @@ character after a variable will apply a filter.
 
 __Filter chaining__
 
-You can chain multiple filters together and use a pipe ( | ) character to seperate 
+You can chain multiple filters together and use a pipe ( | ) character to separate 
 them. `{{ document.body|escape|nl2br }}`
 
 __Filter arguments__
 
 Filters can accept arguments for example `{{ document.description|truncate 20 }}` 
 will display first 20 character of
-document descriptiom. Moreover, there are cases you want to pass multiple arguments 
-and you can use comma( , ) to seperate them
+document description. Moreover, there are cases you want to pass multiple arguments 
+and you can use comma( , ) to separate them
 `{{ person.bio|truncate 20, "..." }}`
 
 __Filter named arguments__
@@ -133,8 +133,8 @@ h2o uses colon ( : ) to for named arguments to build optional arguments array.
 
 `{{ '/images/logo.png' | image_tag width: 450, height: 250, alt: "company logo" }}`
 
-Note: Difference with django, smarty 
-H2o do not use colon ( : ) character to seperate arguments for readibility reasons, 
+Note: Difference with Django, Smarty 
+H2o do not use colon ( : ) character to separate arguments for readability reasons, 
 h2o uses comma ( , ) which is more logical.
 
  
@@ -176,7 +176,7 @@ to understand.
 Template inheritance is implemented using block, extends tag, for programmers 
 who is familiar with object oriented principles this is easy. 
 
-Quote from django
+Quote from Django doc
 > ... a base skeleton template that contains all the common elements of your 
 > site and defines blocks that child templates can override.
 
@@ -222,7 +222,7 @@ _page.html_ - to define a template specific of a page.
 The page.html extends base.html, now you will be able to override any block 
 previously defined. 
 
-There is a very good article about template inheritance in django, in area of 
+There is a very good article about template inheritance in Django, in area of 
 template inheritance h2o work exactly the same way.
 
 [Power of inheritance][3] is a very good blog post explaining inheritance 
