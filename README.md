@@ -37,7 +37,6 @@ With SVN
 
 `svn checkout http://h2o-template.googlecode.com/svn/trunk/ h2o`
 
-
 ### Installation
  1. Download and extract h2o in your project path or your php include path
 
@@ -113,24 +112,33 @@ character after a variable will apply a filter.
 
 __Filter chaining__
 
-![filter chaining](http://wiki.shopify.com/upload/8/8c/Filterchain.jpg)
+![filter chaining](http://wiki.shopify.com/upload/8/8c/Filterchain.jpg)  
 Let me burrow the image from liquid template
 
 You can chain multiple filters together and use a pipe ( | ) character to separate 
 them. `{{ document.body|escape|nl2br }}`
 
-__Filter arguments__
-
+__Filter arguments__  
 Filters can accept arguments for example `{{ document.description|truncate 20 }}` 
 will display first 20 character of
 document description. Moreover, there are cases you want to pass multiple arguments 
 and you can use comma( , ) to separate them
 `{{ person.bio|truncate 20, "..." }}`
 
-__Filter named arguments__
+__Filter named arguments__  
 h2o uses colon ( : ) to for named arguments to build optional arguments array. 
 
-`{{ '/images/logo.png' | image_tag width: 450, height: 250, alt: "company logo" }}`
+`{{ '/images/logo.png' | image_tag width:450, height:250, alt:"company logo" }}`
+
+and this translate to php will be this and that is pretty much what happen internally
+    
+    <?php
+        echo image_tag("/image/logo.png", array(
+            'width' => 450, 
+            'height' => 250, 
+            'alt'=>'company logo'
+        ));
+    ?>
 
 Note: Difference with Django, Smarty 
 H2o do not use colon ( : ) character to separate arguments for readability reasons, 
