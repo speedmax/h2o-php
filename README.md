@@ -40,14 +40,15 @@ With SVN
 
 ### Installation
  1. Download and extract h2o in your project path or your php include path
- 
- Sample setup
 
-    myawesome_app/         
-        index.php           
-        templates/          
-        index.html
-        h2o/                
+    Sample file structure setup 
+     
+        myawesome_app/
+            index.php
+            templates/
+            index.html
+            h2o/
+
 
  2. use `require 'h2o/h2o.php'` in your php statement to include h2o library
  3. Below is a quick start code example to get a kick start 
