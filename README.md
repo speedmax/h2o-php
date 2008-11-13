@@ -117,6 +117,9 @@ character after a variable will apply a filter.
 
 __Filter chaining__
 
+![filter chaining](http://wiki.shopify.com/upload/8/8c/Filterchain.jpg)
+Let me burrow the image from liquid template
+
 You can chain multiple filters together and use a pipe ( | ) character to separate 
 them. `{{ document.body|escape|nl2br }}`
 
