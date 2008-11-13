@@ -4,7 +4,6 @@ require_once 'spec_helper.php';
 class Describe_local_variable extends SimpleSpec {
     
     function should_retrive_variable_using_array_interface() {
-
         $c = create_context(array(
             'name' => 'peter',
             'hobbies' => array('football', 'basket ball', 'swimming'),
@@ -13,8 +12,8 @@ class Describe_local_variable extends SimpleSpec {
                 'city' => 'Marry hill', 'state' => 'NSW', 'postcode' => 2320
             ) 
         ));
-        $this[$c['name']]->should_be("peter");
-        $this[$c['name']]->should_not_be("peter wong");
+        expects($c['name'])->should_be("peter");
+        expects($c['name'])->should_not_be("peter wong");
     }
 
     function should_set_variable_using_array_interface() {
@@ -22,8 +21,8 @@ class Describe_local_variable extends SimpleSpec {
         $c['name'] = 'peter';
         $c['age'] = 18;
         
-        $this[ $c['name'] ]->should_be("peter");
-        $this[ $c['age'] ]->should_be(18);
+        expects($c['name'])->should_be("peter");
+        expects($c['age'])->should_be(18);
     }
     
     function should_ensure_scope_remain_local_in_a_stack_layer() {
@@ -32,13 +31,13 @@ class Describe_local_variable extends SimpleSpec {
             $c->push(array('name'=>'wong'));
             
                 $c->push(array('name'=>'lee'));
-                    $this[$c['name']]->should_be('lee');
-                    $this[$c->resolve(':name')]->should_be('lee');
+                    expects($c['name'])->should_be('lee');
+                    expects($c->resolve(':name'))->should_be('lee');
                 $c->pop();
-                $this[$c->resolve(':name')]->should_be('wong');
+                expects($c->resolve(':name'))->should_be('wong');
 
             $c->pop();
-        $this[$c['name']]->should_be('peter');
+        expects($c['name'])->should_be('peter');
     }
 }
 
@@ -47,29 +46,29 @@ class Describe_context_lookup_basic_data_types extends SimpleSpec {
     function should_resolve_a_integer() {
         $c= create_context();
         
-        $this[$c->resolve('0000')]->should_be(0);
-        $this[$c->resolve('-00001')]->should_be(-1);
-        $this[$c->resolve('20000')]->should_be(20000);
+        expects($c->resolve('0000'))->should_be(0);
+        expects($c->resolve('-00001'))->should_be(-1);
+        expects($c->resolve('20000'))->should_be(20000);
     }
     
     function should_resolve_a_float_number() {
         $c= create_context();
         
         # Float
-        $this[$c->resolve('0.001')]->should_be(0.001);
-        $this[$c->resolve('99.999')]->should_be(99.999);
+        expects($c->resolve('0.001'))->should_be(0.001);
+        expects($c->resolve('99.999'))->should_be(99.999);
     }
     
     function should_resolve_a_negative_number() {
         $c= create_context();
         
-        $this[$c->resolve('-00001')]->should_be(-1);   
+        expects($c->resolve('-00001'))->should_be(-1);   
     }
     
     function should_resolve_a_string() {
         $c= new H2o_Context;
-        $this[$c->resolve('"something"')]->should_be('something');
-        $this[$c->resolve("'he hasn\'t eat it yet'")]->should_be("he hasn't eat it yet");
+        expects($c->resolve('"something"'))->should_be('something');
+        expects($c->resolve("'he hasn\'t eat it yet'"))->should_be("he hasn't eat it yet");
     }
 }
 
@@ -80,9 +79,9 @@ class Describe_array_lookup extends SimpleSpec {
             'numbers'   => array(1,2,3,4,1,2,3,4,5),
         ));
         
-        $this[$c->resolve(':numbers.0')]->should_be(1);
-        $this[$c->resolve(':numbers.1')]->should_be(2);
-        $this[$c->resolve(':numbers.8')]->should_be(5);
+        expects($c->resolve(':numbers.0'))->should_be(1);
+        expects($c->resolve(':numbers.1'))->should_be(2);
+        expects($c->resolve(':numbers.8'))->should_be(5);
     }
     
     function should_be_access_by_array_key() {
@@ -90,9 +89,9 @@ class Describe_array_lookup extends SimpleSpec {
             'name' => 'peter','age' => 26, 'tasks'=> array('shopping','sleep')
         )));
         
-        $this[$c->resolve(':person.name')]->should_be('peter');
-        $this[$c->resolve(':person.age')]->should_be(26);
-        $this[$c->resolve(':person.tasks.first')]->should_be('shopping');
+        expects($c->resolve(':person.name'))->should_be('peter');
+        expects($c->resolve(':person.age'))->should_be(26);
+        expects($c->resolve(':person.tasks.first'))->should_be('shopping');
     }
     
     function should_resolve_array_like_objects() {
@@ -104,10 +103,10 @@ class Describe_array_lookup extends SimpleSpec {
                 'name' => 'peter','seo-url' => 'http://google.com'
             ))
         ));
-        $this[$c->resolve(':list.0')]->should_be('item 1');
-        $this[$c->resolve(':list.length')]->should_be(3);
-        $this[$c->resolve(':dict.name')]->should_be('peter');
-        $this[$c->resolve(':dict.seo-url')]->should_be('http://google.com');
+        expects($c->resolve(':list.0'))->should_be('item 1');
+        expects($c->resolve(':list.length'))->should_be(3);
+        expects($c->resolve(':dict.name'))->should_be('peter');
+        expects($c->resolve(':dict.seo-url'))->should_be('http://google.com');
     }
     
     function should_resolve_additional_array_property() {
@@ -115,10 +114,10 @@ class Describe_array_lookup extends SimpleSpec {
            'hobbies'=> array('football', 'basket ball', 'swimming')
        ));
        
-       $this[$c->resolve(':hobbies.first')]->should_be('football');
-       $this[$c->resolve(':hobbies.last')]->should_be('swimming');
-       $this[$c->resolve(':hobbies.length')]->should_be(3);
-       $this[$c->resolve(':hobbies.size')]->should_be(3);
+       expects($c->resolve(':hobbies.first'))->should_be('football');
+       expects($c->resolve(':hobbies.last'))->should_be('swimming');
+       expects($c->resolve(':hobbies.length'))->should_be(3);
+       expects($c->resolve(':hobbies.size'))->should_be(3);
     }
 }
 
@@ -132,8 +131,8 @@ class Describe_context_lookup extends SimpleSpec {
                 'postcode' => 2320
             ),
         ));
-        $this[$c->resolve(':location.address')]->should_be('1st Jones St');
-        $this[$c->resolve(':location.city')]->should_be('Marry hill');
+        expects($c->resolve(':location.address'))->should_be('1st Jones St');
+        expects($c->resolve(':location.city'))->should_be('Marry hill');
     }
     
     function should_return_null_for_undefined_or_private_object_property() {
@@ -142,8 +141,8 @@ class Describe_context_lookup extends SimpleSpec {
                 'my business report', 
                 'Since Augest 2005, financial projection has..')
         ));
-        $this[$c->resolve(':document.uuid')]->should_be_null();   // Private
-        $this[$c->resolve(':document.undefined_property')]->should_be_null();
+        expects($c->resolve(':document.uuid'))->should_be_null();   // Private
+        expects($c->resolve(':document.undefined_property'))->should_be_null();
     }
 
     function should_use_dot_to_perform_method_call() {
@@ -152,8 +151,8 @@ class Describe_context_lookup extends SimpleSpec {
                 'my business report', 
                 'Since Augest 2005, financial projection has..')
         ));
-        $this[$c->resolve(':document.to_pdf')]->should_match('/PDF Version :/');
-        $this[$c->resolve(':document.to_xml')]->should_match('/<title>my business report<\/title>/');
+        expects($c->resolve(':document.to_pdf'))->should_match('/PDF Version :/');
+        expects($c->resolve(':document.to_xml'))->should_match('/<title>my business report<\/title>/');
     }
     
     function should_return_null_for_undefined_or_private_method_call() {
@@ -163,8 +162,8 @@ class Describe_context_lookup extends SimpleSpec {
                 'Since Augest 2005, financial projection has..')
         ));
         
-        $this[$c->resolve(':document._secret')]->should_be_null();   // Private
-        $this[$c->resolve(':document.undefined_method')]->should_be_null();
+        expects($c->resolve(':document._secret'))->should_be_null();   // Private
+        expects($c->resolve(':document.undefined_method'))->should_be_null();
     }
 }
 
