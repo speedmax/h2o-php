@@ -311,7 +311,7 @@ class DatetimeFilters extends FilterCollection {
 }
 
 /*  Ultizie php funciton as Filters */
-h2o::addFilter(array('md5', 'sha1', 'wordwrap', 'trim', 'upper' => 'strtoupper', 'lower' => 'strtolower'));
+h2o::addFilter(array('md5', 'sha1', 'numberformat'=>'number_format', 'wordwrap', 'trim', 'upper' => 'strtoupper', 'lower' => 'strtolower'));
 
 /* Add filter collections */
 h2o::addFilter(array('CoreFilters', 'StringFilters', 'NumberFilters', 'DatetimeFilters', 'HtmlFilters'));

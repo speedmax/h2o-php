@@ -2,7 +2,7 @@
 class Describe_Template extends SimpleSpec {
 
     function should_be_able_to_create_from_string() {
-        $result = h2o::parseString("<h1>{{ a }}</h1>")->render(array('a'=>'hello world'));
+        $result = h2o("<h1>{{ a }}</h1>")->render(array('a'=>'hello world'));
         expects($result)->should_be("<h1>hello world</h1>");
     }
 }
@@ -21,7 +21,6 @@ class Describe_h2o_tag_registration extends SimpleSpec {
         h2o::addTag('sample', 'Sample_Tag');        
         expects(h2o::$tags)->should_contain('Sample_Tag');
         unset(h2o::$tags['sample']);
-
 
         h2o::addTag('sample');
         expects(h2o::$tags)->should_contain('Sample_Tag');
@@ -45,21 +44,9 @@ class Describe_h2o_tag_registration extends SimpleSpec {
         expects(isset(h2o::$tags['s']))->should_be_true();
         unset(h2o::$tags['sample'], h2o::$tags['s']);
     }
-
-}
-
-function sample_filter($value) { 
-    return "i am a filter";
-}
-
-class SampleFilters extends FilterCollection {
-    function hello($value) {
-        return "says hello to : {$value}";
-    }
 }
 
 class Describe_h2o_filter_registration extends SimpleSpec {
-
     function should_pre_register_default_filters() {
         $filters = array_keys(h2o::$filters);
         
@@ -86,21 +73,30 @@ class Describe_h2o_filter_registration extends SimpleSpec {
     
     function should_be_able_to_register_a_filter() {   
         h2o::addFilter('sample_filter');
-        $result= h2o::parseString('{{ something | sample_filter }}')->render();
+        $result= h2o('{{ something | sample_filter }}')->render();
         expects($result)->should_be('i am a filter');
     }
-    
+
     function should_be_able_to_register_a_filter_collection() {
         h2o::addFilter('SampleFilters');
-        
-        echo $result = h2o::parseString('{{ "peter" }}')->render(array('name'=>'peter'));
+
+        $result = h2o('{{ person | hello }}')->render(array('person'=>'peter'));
+        expects($result)->should_be('says hello to peter');
     }
 }
 
+function sample_filter($value) { 
+    return "i am a filter";
+}
+
+class SampleFilters extends FilterCollection {
+    function hello($value) {
+        return "says hello to {$value}";
+    }
+}
 
 function w($str) {
     return array_map('trim', explode(',', $str));
 }
 
-function map($list, $func){}
 ?>

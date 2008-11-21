@@ -5,8 +5,9 @@
  *  encapsulate context, resolve name
  */
 class H2o_Context implements ArrayAccess {
-    public $safeClass = array('stdClass', 'BlockContext');
-    public $scopes = array();
+    var $safeClass = array('stdClass', 'BlockContext');
+    var $scopes;
+    var $options;
     private $arrayMethods = array('first'=> 0, 'last'=> 1, 'length'=> 2, 'size'=> 3);
     static $lookupTable = array();
     
@@ -17,6 +18,8 @@ class H2o_Context implements ArrayAccess {
         
         if (isset($options['safeClass'])) 
             $this->safeClass = array_merge($this->safeClass, $options['safeClass']);
+            
+        $this->options = $options;
     }
 
     function push($layer = array()){
@@ -57,6 +60,10 @@ class H2o_Context implements ArrayAccess {
         foreach ($this->scopes as $layer) {
             if (isset($layer[$key])) unset($layer[$key]);
         }
+    }
+
+    function extend($context) {
+        $this->scopes[0] = array_merge($this->scopes[0], $context);
     }
 
     function set($key, $value) {
@@ -137,6 +144,7 @@ class H2o_Context implements ArrayAccess {
             }
             elseif (is_object($object)) {
                 $classAllowed =  in_array(get_class($object), $this->safeClass) || 
+                                 (isset($object->h2o_safe) && true === $object->h2o_safe) ||
                                    (isset($object->h2o_safe) && in_array($part, $object->h2o_safe));
 
                 if (is_callable(array($object, $part)) && $classAllowed) {

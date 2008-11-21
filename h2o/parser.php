@@ -156,7 +156,7 @@ class H2O_RE {
         self::$filter_end   = '/;/';
         self::$seperator    = '/,/';
         self::$pipe         = '/\|/';
-        self::$operator     = '/\s?(>|<|>=|<=|!=|==|and|not|or)\s?/i';
+        self::$operator     = '/\s?(>|<|>=|<=|!=|==|!|and|not|or)\s?/i';
         self::$number       = '/\d+(\.\d*)?/';
         self::$name         = '/[a-zA-Z][a-zA-Z0-9-_]*(?:\.[a-zA-Z_0-9][a-zA-Z0-9_-]*)*/';
         

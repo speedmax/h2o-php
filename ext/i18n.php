@@ -130,9 +130,9 @@ class H2o_I18n {
         else
             $this->tmp_dir = $this->searchpath.'tmp' .DS;
         
-        if (!is_dir($this->locale_dir))
-            throw new Exception('locale directory cannot be found in '.$this->searchpath);
-            
+        if (!is_dir($this->locale_dir) && !mkdir($this->locale_dir)) {
+            throw new Exception('locale directory not found and failed to created '.$this->searchpath);
+        }
         if (!exec($this->gettext_path."xgettext -V")) {
             throw new Exception(
                 "xgettext binary cannot be found, if you are using Windows system either install through cygwin

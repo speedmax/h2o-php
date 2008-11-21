@@ -62,7 +62,7 @@ class H2o_File_Loader extends H2o_Loader {
                 'content' => serialize($nodelist),
                 'created' => time(),
                 'templates' => $nodelist->parser->storage['templates'],
-                'included' => $nodelist->parser->storage['included']
+                'included' => $nodelist->parser->storage['included'] + array_values(h2o::$extensions)
             );
             $this->cache->write($cache, $object);
         } else {
@@ -148,6 +148,10 @@ class H2o_File_Cache {
         if (isset($options['cache_ttl'])) {
             $this->ttl = $options['cache_ttl'];
         }
+        if(isset($options['cache_prefix'])) {
+            $this->prefix = $options['cache_prefix'];
+        }
+        
         $this->path = realpath($path). DS;
     }
 
@@ -178,6 +182,7 @@ class H2o_File_Cache {
 
 class H2o_Apc_Cache {
     var $ttl = 3600;
+    var $prefix = 'h2o_';
     
     function __construct($options = array()) {
         if (!function_exists('apc_add'))
@@ -185,15 +190,18 @@ class H2o_Apc_Cache {
             
         if (isset($options['cache_ttl'])) {
             $this->ttl = $options['cache_ttl'];
+        } 
+        if(isset($options['cache_prefix'])) {
+            $this->prefix = $options['cache_prefix'];
         }
     }
     
     function read($filename) {
-        return apc_fetch('h2o:'.$filename);
+        return apc_fetch($this->prefix.$filename);
     }
 
     function write($filename, $object) {
-        return apc_store('h2o:'.$filename, $object, $this->ttl);   
+        return apc_store($this->prefix.$filename, $object, $this->ttl);   
     }
     
     function flush() {

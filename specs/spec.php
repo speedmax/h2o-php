@@ -21,12 +21,12 @@
  *          }
  * 
  *          function should_be_very_angry_when_i_break_my_lunch_box() {
- *              $this->expect($this->mum->mood)->should_be('angry');
+ *              expects($this->mum->mood)->should_be('angry');
  *          }
  * 
  *         function should_be_very_happy_when_i_punch_her_in_the_face() {
  *              punch($this->mum);
- *              $this->expect($this->mum->mood)->should_be('happy');
+ *              expects($this->mum->mood)->should_be('happy');
  *          }
  * 
  *          function cleanup() {

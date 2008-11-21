@@ -31,6 +31,7 @@ class H2o {
         return array_merge(array(
             'loader'            =>       'file',
             'cache'             =>      'file',     // file | apc | memcache
+            'cache_prefix'      =>      'h2o_',
             'cache_ttl'         =>      3600,     // file | apc | memcache
             'searchpath'        =>      false,
   
@@ -92,15 +93,30 @@ class H2o {
         return $nodelist;
     }
 
+    function set($context, $value = null) {
+        # replace with new context object
+        if (is_object($context) && $context instanceof H2o_Context) {
+            return $this->context = $context;
+        }
+
+        # Init context
+        if (!$this->context) {
+            $this->context = new H2o_Context($this->defaultContext(), $this->options);
+        }
+        
+        # Extend or set value
+        if (is_array($context)) {
+            return $this->context->extend($context);
+        } 
+        elseif (is_string($context)) {
+            return $this->context[$context] = $value;
+        }
+        return false;
+    }
+    
     # Render the nodelist
     function render($context = array()) {
-        $context = array_merge($this->defaultContext(), $context);
-        
-        if (is_object($context) && $context instanceof H2o_Context) {
-            $this->context = $context;
-        } else {
-            $this->context = new H2o_Context($context, $this->options);
-        }
+        $this->set($context);
 
         $this->stream = new StreamWriter;
         $this->nodelist->render($this->context, $this->stream);
@@ -132,8 +148,7 @@ class H2o {
      *      'tag_name' => 'MagClass',
      *      'tag_name2' => 'TagClass2'
      * ));
-     * 
-     * 
+     *
      *  h2o::addTag('tag_name');      // Tag_name_Tag
      * 
      * h2o::addTag(array('tag_name', 
@@ -217,7 +232,19 @@ class H2o {
     }
 }
 
+/**
+ * Convient wrapper for loading template file or string
+ * @param $name
+ * @param $options - H2o options
+ * @return Instance of H2o Template
+ */
 function h2o($name, $options = array()) {
+    $is_file = '/([^\s]*?)(\.[^.\s]*$)/';
+    
+    if (!preg_match($is_file, $name)) {
+        return H2o::parseString($name); 
+    }
+    
     $instance = new H2o($name, $options);
     return $instance;
 }

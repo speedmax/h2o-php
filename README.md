@@ -45,7 +45,7 @@ With SVN
         myawesome_app/
             index.php
             templates/
-                index.html
+              index.html
             h2o/
 
 

@@ -6,9 +6,9 @@
  */
 
 class If_Tag extends H2o_Node {
-    var $body;
-    var $else;
-    var $negate;
+    private $body;
+    private $else;
+    private $negate;
     
     function __construct($argstring, $parser, $position = 0) {
         if (preg_match('/\s(and|or)\s/', $argstring)) 
@@ -138,12 +138,12 @@ class Block_Tag extends H2o_Node {
     }
 
     function render($context, $stream, $index = 1) {
-        $nodelist = $this->stack[count($this->stack) - $index];
-        
-        if ($nodelist) {
+        $key = count($this->stack) - $index;
+
+        if (isset($this->stack[$key])) {
             $context->push();
             $context['block'] = new BlockContext($this, $context, $index);
-            $nodelist->render($context, $stream);
+            $this->stack[$key]->render($context, $stream);
             $context->pop();
         }
     }
@@ -264,16 +264,18 @@ class Cycle_Tag extends H2o_Node {
 }
 
 class Load_Tag extends H2o_Node {
-    static $searchpath = array(H2O_ROOT);
-    var $extension;
-    
+    public $position;
+    private $searchpath = array(H2O_ROOT);
+    private $extension;
+
     function __construct($argstring, $parser, $pos = 0) {
         $this->extension = stripcslashes(substr($argstring, 1, -1));
         
         if ($parser->runtime->searchpath)
             $this->appendPath($parser->runtime->searchpath);
-
+            
         $parser->storage['included'][$this->extension] = $file = $this->load();
+        $this->position = $pos;
     }
 
     function render($context, $stream) {
@@ -281,21 +283,20 @@ class Load_Tag extends H2o_Node {
     }
 
     function appendPath($path) {
-        self::$searchpath[] = $path;
+        $this->searchpath[] = $path;
     }
     
     private function load() {
         if (isset(h2o::$extensions[$this->extension])) {
             return true;
         }
-        foreach(self::$searchpath as $path) {
+        foreach($this->searchpath as $path) {
             $file = $path.'ext'.DS.$this->extension.'.php';
             if (is_file($file)) {
                 h2o::load($this->extension, $file);
                 return $file;
             }
         }
-
         throw new H2o_Error(
             "Extension: {$this->extension} cannot be loaded, please confirm it exist in extension path"
         );
