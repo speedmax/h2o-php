@@ -111,33 +111,39 @@ class H2o_I18n {
     var $tmp_dir;
     var $extensions = array('html','tpl');
     var $gettext_path = '';
-
+    var $gettext_setup = false;
+    
     function __construct($path, $options = array()) {
         if (is_file($path))
             $path = dirname($path) . DS;
 
         $this->searchpath = realpath($path).DS;
         $this->locale_dir = $this->searchpath .'locale'.DS;
-
-        if (isset($options['ext']))
-            $this->extensions = $options['ext'];
-
-        if (isset($options['gettext_path']))
-            $this->gettext_path = $options['gettext_path'];
+        $this->options = $options;
+        
 
         if (isset($options['tmp_dir']))
             $this->tmp_dir = $options['tmp_dir'];
         else
             $this->tmp_dir = $this->searchpath.'tmp' .DS;
         
+        if (isset($options['ext']))
+            $this->extensions = $options['ext'];
+
+        if (isset($options['locale']) && $options['locale']) {
+            $this->setLocale($options['locale']);
+        }
+        
+        if (isset($options['extract_message']) && $options['extract_message']) {
+            $this->extract();
+        }
+        
+        if (isset($options['compile_message']) && $options['compile_message']) {
+            $this->compile();
+        }
+        
         if (!is_dir($this->locale_dir) && !mkdir($this->locale_dir)) {
             throw new Exception('locale directory not found and failed to created '.$this->searchpath);
-        }
-        if (!exec($this->gettext_path."xgettext -V")) {
-            throw new Exception(
-                "xgettext binary cannot be found, if you are using Windows system either install through cygwin
-                or read instruction here http://docs.djangoproject.com/en/dev/topics/i18n/#gettext-on-windows"
-            );
         }
     }
     
@@ -150,7 +156,30 @@ class H2o_I18n {
         }
     }
     
+    function setupGettext() {
+        
+        if (isset($this->options['gettext_path']))
+            $this->gettext_path = $this->options['gettext_path'];
+
+        if (!file_exists($this->gettext_path))
+            $this->gettext_path = $this->searchpath.$this->gettext_path;
+
+        $this->gettext_path = realpath($this->gettext_path).DS;
+
+        if (!exec($this->gettext_path."xgettext -V")) {
+            throw new Exception(
+                "xgettext binary cannot be found, if you are using Windows system either install through cygwin
+                or read instruction here http://docs.djangoproject.com/en/dev/topics/i18n/#gettext-on-windows"
+            );
+        }
+        
+        $this->gettext_setup = true;
+    }
+    
     function extract() {
+        if (!$this->gettext_setup)
+            $this->setupGettext();
+
         if (!class_exists('H2o_Lexer'))
             require H2O_ROOT.'h2o/parser.php';
         # get all tempaltes
@@ -233,6 +262,9 @@ class H2o_I18n {
     }
 
     function compile() {
+        if (!$this->gettext_setup)
+            $this->setupGettext();
+        
         foreach(glob($this->locale_dir.'*') as $dir) {
           if (!is_dir($dir)) continue;
           $locale = basename($dir);
@@ -249,6 +281,7 @@ class H2o_I18n {
     }
     
     function setLocale($locale) {
+        $this->locale = $locale;
         putenv("LC_ALL={$locale}");
         setlocale(LC_ALL, $locale);
         if (!is_dir($this->locale_dir))

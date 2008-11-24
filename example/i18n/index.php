@@ -1,23 +1,18 @@
 <?php
 
 require '../../h2o.php';
-h2o::load('i18n');
 
-$i18n = new H2o_I18n(dirname(__FILE__).DS, array(
-   #  For windows users you can specify where is the path to gettext binary
-   # 'gettext_path' => dirname(__FILE__).DS.'bin/gettext/bin/' 
+$template = new H2o('trans.html', array(
+    'cache'=> false,
+    'i18n' => array(
+        'locale' => isset($_GET['lang']) ? $_GET['lang'] : false,
+        'gettext_path' => '../bin/gettext/bin/',
+        'extract_message' => true,
+        'compile_message' => true,
+    )
 ));
 
-if (isset($_GET['lang'])) {
-    $i18n->setLocale($_GET['lang']);
-}
-
-$i18n->extract();   // Extract translation string to PO files
-$i18n->compile();   // Compiles PO files to MO files
-
-$template = new H2o('trans.html', array('cache'=> false));
-
-ender(array(
+echo $template->render(array(
     'users' => array(
         array(
             'username' =>           'peter',

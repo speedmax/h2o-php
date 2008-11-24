@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: template translation\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-13 03:07+1100\n"
+"POT-Creation-Date: 2008-11-24 13:47+1100\n"
 "PO-Revision-Date: 2008-11-13 02:44+1000\n"
 "Last-Translator: Taylor Luk\n"
 "Language-Team: \n"
@@ -16,24 +16,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: /Workspace/h2o-template/example/i18n/trans.html:2
-#: /Workspace/h2o-template/example/i18n/trans.html:3
 msgid "Internationalized templates"
 msgstr "Internationalized Vorlagen"
 
-#: /Workspace/h2o-template/example/i18n/trans.html:4
 msgid "Select languages"
 msgstr "Wählen Sie Sprachen"
 
-#: /Workspace/h2o-template/example/i18n/trans.html:5
 msgid "English"
 msgstr "Englisch"
 
-#: /Workspace/h2o-template/example/i18n/trans.html:6
 msgid "Finish"
 msgstr "Fertig stellen"
 
-#: /Workspace/h2o-template/example/i18n/trans.html:7
 msgid ""
 "  \n"
 "    (software engineering) The act or process of making a product suitable "
@@ -54,11 +48,9 @@ msgstr ""
 "     \n"
 "\t"
 
-#: /Workspace/h2o-template/example/i18n/trans.html:13
 msgid "Pluralization support"
 msgstr "Pluralisierung Unterstützung"
 
-#: /Workspace/h2o-template/example/i18n/trans.html:14
 msgid ""
 "\t    there is one %(count) item.\n"
 "\t"
@@ -72,7 +64,6 @@ msgstr[1] ""
 "\t    Es gibt einige %(count) Elemente.\n"
 "\t"
 
-#: /Workspace/h2o-template/example/i18n/trans.html:17
 msgid ""
 "\t\t    %(name) has %(count) task\n"
 "\t\t"

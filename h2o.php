@@ -68,6 +68,17 @@ class H2o {
                 $this->searchpath = dirname(realpath($file)).DS;
             $this->loader = new $loaderClass($this->searchpath, $this->options);
         }
+        
+        if (isset($options['i18n'])) {
+            $i18n_options = array();            
+            if (is_array($options['i18n'])) {
+                $i18n_options = $options['i18n'];
+            }
+            
+            h2o::load('i18n');
+            $this->i18n = new H2o_I18n($this->searchpath, $i18n_options);
+        }
+        
         $this->loader->runtime = $this;
         $this->nodelist = $this->loadTemplate($file);
     }
