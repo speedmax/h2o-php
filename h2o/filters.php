@@ -192,8 +192,8 @@ class HtmlFilters extends FilterCollection {
         return sprintf('<a href="%s" %s>%s</a>', $url, $attrs, $text);
     }
     
-    function links_with ($url, $text, $attr = array()) {
-        return self::links($text, $url, $attr);
+    function links_with ($url, $text, $options = array()) {
+        return self::links_to($text, $url, $options);
     }
     
     function strip_tags($text) {

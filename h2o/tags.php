@@ -43,11 +43,12 @@ class If_Tag extends H2o_Node {
 
 class For_Tag extends H2o_Node {
     public $position;
-    private $iteratable, $key, $item, $body, $else;
+    private $iteratable, $key, $item, $body, $else, $limit, $reversed;
     private $syntax = '{
         ([a-zA-Z][a-zA-Z0-9-_]*)(?:,\s?([a-zA-Z][a-zA-Z0-9-_]*))?
         \s+in\s+
         ([a-zA-Z][a-zA-Z0-9-_]*(?:\.[a-zA-Z_0-9][a-zA-Z0-9_-]*)*)\s*   # Iteratable name
+        (?:limit\s*:\s*(\d+))?\s*
         (reversed)?                                                     # Reverse keyword
     }x';
 
@@ -60,8 +61,11 @@ class For_Tag extends H2o_Node {
         if ($parser->token->content === 'else')
             $this->else = $parser->parse('endfor');
 
-        @list(,$this->key, $this->item, $this->iteratable, $this->reversed) = $match;
+        @list(,$this->key, $this->item, $this->iteratable, $this->limit, $this->reversed) = $match;
         
+        if ($this->limit)
+            $this->limit = (int) $this->limit;
+
         # Swap value if no key found
         if (!$this->item) {
             list($this->key, $this->item) = array($this->item, $this->key);
@@ -72,9 +76,13 @@ class For_Tag extends H2o_Node {
 
     function render($context, $stream) {
         $iteratable = $context->resolve($this->iteratable);
-        
+
         if ($this->reversed)
             $iteratable = array_reverse($iteratable);
+
+        if ($this->limit)
+            $iteratable = array_slice($iteratable, 0, $this->limit);
+
         $length = count($iteratable);
         
         if ($length) {
