@@ -4,19 +4,19 @@ class FilterCollection {};
 
 
 class CoreFilters extends FilterCollection {
-    function first($value) {
+    static function first($value) {
         return $value[0];
     }
-    
-    function last($value) {
+
+    static function last($value) {
         return $value[count($value) - 1];
     }
-    
-    function join($value, $delimiter = ', ') {
+
+    static function join($value, $delimiter = ', ') {
         return join($delimiter, $value);
     }
-    
-    function urlencode($data) {
+
+    static function urlencode($data) {
         if (is_array($data)) {
             $result;
             foreach ($data as $name => $value) {
@@ -28,61 +28,61 @@ class CoreFilters extends FilterCollection {
             return urlencode($data);
         }
     }
-    
-    function hyphenize ($string) {
+
+    static function hyphenize ($string) {
         $rules = array('/[^\w\s-]+/'=>'','/\s+/'=>'-', '/-{2,}/'=>'-');
         $string = preg_replace(array_keys($rules), $rules, trim($string));
         return $string = trim(strtolower($string));
     }
- 
-    function urlize($url, $truncate = false) {
+
+    static function urlize($url, $truncate = false) {
         if (preg_match('/^(http|https|ftp:\/\/([^\s"\']+))/i', $url, $match))
             $url = "<a href='{$url}'>". ($truncate ? truncate($url,$truncate): $url).'</a>';
         return $url;
     }
 
-    function set_default($object, $default) {
+    static function set_default($object, $default) {
         return !$object ? $default : $object;
     }
 }
 
 class StringFilters extends FilterCollection {
 
-    function humanize($string) {
+    static function humanize($string) {
         $string = preg_replace('/\s+/', ' ', trim(preg_replace('/[^A-Za-z0-9()!,?$]+/', ' ', $string)));
         return capfirst($string);
     }
-    
-    function capitalize($string) {
+
+    static function capitalize($string) {
         return ucwords(strtolower($string)) ;
     }
-    
-    function titlize($string) {
+
+    static function titlize($string) {
         return self::capitalize($string);
     }
-    
-    function capfirst($string) {
+
+    static function capfirst($string) {
         $string = strtolower($string);
         return strtoupper($string{0}). substr($string, 1, strlen($string));
     }
-    
-    function tighten_space($value) {
+
+    static function tighten_space($value) {
         return preg_replace("/\s{2,}/", ' ', $value);
     }
-    
-    function escape($value, $attribute = false) {
+
+    static function escape($value, $attribute = false) {
         return htmlspecialchars($value, $attribute ? ENT_QUOTES : ENT_NOQUOTES);
     }
-    
-    function e($value, $attribute = false) {
+
+    static function e($value, $attribute = false) {
         return self::escape($value, $attribute);
     }
-    
-    function truncate ($string, $max = 50, $ends = '...') {
+
+    static function truncate ($string, $max = 50, $ends = '...') {
         return substr_replace($string, $ends, $max - strlen($ends));
     }
-    
-    function limitwords($text, $limit = 50, $ends = '...') {
+
+    static function limitwords($text, $limit = 50, $ends = '...') {
         if (strlen($text) > $limit) {
             $words = str_word_count($text, 2);
             $pos = array_keys($words);
@@ -96,12 +96,12 @@ class StringFilters extends FilterCollection {
 }
 
 class NumberFilters extends FilterCollection {
-    function filesize ($bytes, $round = 1) {
+    static function filesize ($bytes, $round = 1) {
         if ($bytes==0)
             return '0 bytes';
         elseif ($bytes==1)
             return '1 byte';
-    
+
         $units = array(
             'bytes' => pow(2, 0), 'kB' => pow(2, 10),
             'BM' => pow(2, 20), 'GB' => pow(2, 30),
@@ -120,16 +120,16 @@ class NumberFilters extends FilterCollection {
         }
     }
 
-    function currency($amount, $currency = 'USD', $precision = 2, $negateWithParentheses = false) {
+    static function currency($amount, $currency = 'USD', $precision = 2, $negateWithParentheses = false) {
         $definition = array(
-            'EUR' => array('�','.',','), 'GBP' => '�', 'JPY' => '�', 
+            'EUR' => array('�','.',','), 'GBP' => '�', 'JPY' => '�',
             'USD'=>'$', 'AU' => '$', 'CAN' => '$'
         );
         $negative = false;
         $separator = ',';
         $decimals = '.';
         $currency = strtoupper($currency);
-    
+
         // Is negative
         if (strpos('-', $amount) !== false) {
             $negative = true;
@@ -149,7 +149,7 @@ class NumberFilters extends FilterCollection {
         if (round($amount, $precision) == $zero) {
             $amount = $zero;
         }
-    
+
         if (isset($definition[$currency])) {
             $symbol = $definition[$currency];
             if (is_array($symbol))
@@ -164,54 +164,54 @@ class NumberFilters extends FilterCollection {
 }
 
 class HtmlFilters extends FilterCollection {
-    function base_url($url, $options = array()) {
+    static function base_url($url, $options = array()) {
         return $url;
     }
-    
-    function asset_url($url, $options = array()) {
+
+    static function asset_url($url, $options = array()) {
         return self::base_url($part, $options);
     }
-    
-    function image_tag($url, $options = array()) {
+
+    static function image_tag($url, $options = array()) {
         $attr = self::htmlAttribute(array('alt','width','height','border'), $options);
         return sprintf('<img src="%s" %s/>', $url, $attr);
     }
 
-    function css_tag($url, $options = array()) {
+    static function css_tag($url, $options = array()) {
         $attr = self::htmlAttribute(array('media'), $options);
         return sprintf('<link rel="stylesheet" href="%s" type="text/css" %s />', $url, $attr);
     }
 
-    function script_tag($url) {
+    static function script_tag($url) {
         return sprintf('<script src="%s" type="text/javascript"></script>', $url);
     }
-    
-    function links_to($text, $url, $options = array()) {
+
+    static function links_to($text, $url, $options = array()) {
         $attrs = self::htmlAttribute(array('ref'), $options);
         $url = self::base_url($url, $options);
         return sprintf('<a href="%s" %s>%s</a>', $url, $attrs, $text);
     }
-    
-    function links_with ($url, $text, $options = array()) {
+
+    static function links_with ($url, $text, $options = array()) {
         return self::links_to($text, $url, $options);
     }
-    
-    function strip_tags($text) {
+
+    static function strip_tags($text) {
         $text = preg_replace(array('/</', '/>/'), array(' <', '> '),$text);
         return strip_tags($text);
     }
 
-    function linebreaks($value, $format = 'p') {
+    static function linebreaks($value, $format = 'p') {
         if ($format == 'br')
         return h2o_nl2br($value);
         return nl2pbr($value);
     }
-    
-    function nl2br($value) {
+
+    static function nl2br($value) {
         return str_replace("\n", "<br />\n", $value);
     }
-    
-    function nl2pbr($value) {
+
+    static function nl2pbr($value) {
         $result = array();
         $parts = preg_split('/(\r?\n){2,}/m', $value);
         foreach ($parts as $part) {
@@ -222,7 +222,7 @@ class HtmlFilters extends FilterCollection {
 
     private static function htmlAttribute($attrs = array(), $data = array()) {
         $attrs = self::extract(array_merge(array('id', 'class', 'title', "style"), $attrs), $data);
-        
+
         $result = array();
         foreach ($attrs as $name => $value) {
             $result[] = "{$name}=\"{$value}\"";
@@ -241,16 +241,16 @@ class HtmlFilters extends FilterCollection {
 }
 
 class DatetimeFilters extends FilterCollection {
-    function date($time, $format = 'jS F Y H:i') {
+    static function date($time, $format = 'jS F Y H:i') {
         return date($format, strtotime($time));
     }
 
-    function relative_time($timestamp, $format = 'g:iA') {
+    static function relative_time($timestamp, $format = 'g:iA') {
         $timestamp = strtotime($timestamp);
         $time   = mktime(0, 0, 0);
         $delta  = time() - $timestamp;
         $string = '';
-        
+
         if ($timestamp < $time - 86400) {
             return date("F j, Y, g:i a", $timestamp);
         }
@@ -265,7 +265,7 @@ class DatetimeFilters extends FilterCollection {
         else if ($delta >= 3600)
             $string .= "1 hour ";
         $delta  %= 3600;
-        
+
         if ($delta > 60)
             $string .= floor($delta / 60) . " minutes ";
         else
@@ -273,7 +273,7 @@ class DatetimeFilters extends FilterCollection {
         return "$string ago";
     }
 
-    function relative_date($time) {
+    static function relative_date($time) {
         $time = strtotime($time);
         $today = strtotime(date('M j, Y'));
         $reldays = ($time - $today)/86400;
@@ -284,7 +284,7 @@ class DatetimeFilters extends FilterCollection {
         } else if ($reldays >= -1 && $reldays < 0) {
             return 'yesterday';
         }
-        
+
         if (abs($reldays) < 7) {
             if ($reldays > 0) {
                 $reldays = floor($reldays);
@@ -300,8 +300,8 @@ class DatetimeFilters extends FilterCollection {
             return date('l, F j, Y',$time ? $time : time());
         }
     }
-    
-    function relative_datetime($time) {
+
+    static function relative_datetime($time) {
         $date = self::relative_date($time);
         if ($date == 'today') {
             return self::relative_time($time);
