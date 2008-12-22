@@ -31,7 +31,7 @@ Download
  
 With Git
 
-`git clone http://github.com/speedmax/h2o-php.gif`
+`git clone http://github.com/speedmax/h2o-php.git`
 
 With SVN 
 
