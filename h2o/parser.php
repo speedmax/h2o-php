@@ -110,7 +110,8 @@ class H2o_Parser {
         $result = array();
         $current_buffer = &$result;
         $filter_buffer = array();
-        foreach ($parser->parse() as $token) {
+        $tokens = $parser->parse();
+        foreach ($tokens as $token) {
             list($token, $data) = $token;
             if ($token == 'filter_start') {
                 $filter_buffer = array();
@@ -134,6 +135,14 @@ class H2o_Parser {
 
                 $namedArgs =& $current_buffer[count($current_buffer) - 1]; 
                 list($name,$value) = array_map('trim', explode(':', $data, 2));
+                
+                # if argument value is variable mark it
+                $ap = new ArgumentLexer($value);
+                $t = $ap->parse();
+
+                if (isset($t[0][0]) && $t[0][0] == 'name' && $value !== 'true' && $value !== 'false') {
+                    $value = symbol($value);
+                }
                 $namedArgs[$name] = $value;
             }
             elseif( $token == 'operator') {
@@ -183,7 +192,7 @@ class ArgumentLexer {
         '!' => 'not', '!='=> 'ne', '==' => 'eq', '>' => 'gt', '<' => 'lt', '<=' => 'le', '>=' => 'ge'
     );
 
-    function __construct($source, $fpos){
+    function __construct($source, $fpos = 0){
         if (!is_null($source))
           $this->source = $source;
         $this->fpos=$fpos;

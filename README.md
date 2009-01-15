@@ -31,7 +31,7 @@ Download
  
 With Git
 
-`git clone http://github.com/speedmax/h2o-php.gif`
+`git clone http://github.com/speedmax/h2o-php.git`
 
 With SVN 
 
@@ -69,6 +69,16 @@ With SVN
         $h2o = new h2o('index.html');
         echo $h2o->render(array('name'=>'Peter Jackson'));
     ?>
+
+
+Useful links
+------------------------
+
+ * Please submit patches or bug report to our [lighthouse bug tracker][issue]
+ * Checkout [Google group][group] for h2o related discussion
+
+ [issue]:http://idealian.lighthouseapp.com/projects/11041-h2o-template-language
+ [group]:http://groups.google.com/group/h2o-template-php
 
 
 Syntax explanation
@@ -373,14 +383,6 @@ foot wet.
     and i don't think
    i plan to implement them that kind of force you to construct a better data
    api any way.
-
-
-Bug Report
-------------------------
-Please submit patches or bug report at [Issue tracker on Google code][issue]
-
- [issue]:http://code.google.com/p/h2o-template/issues/list
-
 
 Credit
 ------------------------

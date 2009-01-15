@@ -8,6 +8,7 @@
 require '../../h2o.php';
 
 $template = new H2o('index.html', array(
+    'cache' => false,
     'cache_dir' => dirname(__FILE__)
 ));
 

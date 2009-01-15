@@ -244,7 +244,7 @@ class H2o {
 }
 
 /**
- * Convient wrapper for loading template file or string
+ * Convenient wrapper for loading template file or string
  * @param $name
  * @param $options - H2o options
  * @return Instance of H2o Template

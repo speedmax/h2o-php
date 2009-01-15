@@ -56,9 +56,9 @@ class Describe_Parser_Patterns extends SimpleSpec {
 class Describe_Argument_Lexer extends SimpleSpec {
     
     function should_parse_named_arguments() {
-        $result = $this->parse("something | filter 11, name: 'something', age: 18");
+        $result = $this->parse("something | filter 11, name: 'something', age: 18, var: variable, active: true");
         $expected = array(
-            ':something', array(':filter', 11, array('name' => "'something'", 'age' => 18))
+            ':something', array(':filter', 11, array('name' => "'something'", 'age' => 18, 'var' => ':variable', 'active'=>'true'))
         );
         expects($result)->should_be($expected);
     }
