@@ -77,7 +77,7 @@ class H2o_File_Loader extends H2o_Loader {
         $this->cache->flush();
     }
 
-    private function expired($object) {
+    function expired($object) {
         $files = array_merge(array($object->filename), $object->templates);
         foreach ($files as $file) {
             if (filemtime($this->searchpath.$file) > $object->created)
