@@ -63,6 +63,13 @@ class Describe_Argument_Lexer extends SimpleSpec {
         expects($result)->should_be($expected);
     }
     
+    function should_parse_variable_contains_operators() {
+        expects($this->parse("org"))->should_be(array(':org'));
+        expects($this->parse("dand"))->should_be(array(':dand'));
+        expects($this->parse("xor"))->should_be(array(':xor'));
+        expects($this->parse("notd"))->should_be(array(':notd'));
+    }
+    
     private function parse($string) {
         return H2o_Parser::parseArguments($string);
     }
