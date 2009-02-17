@@ -17,13 +17,11 @@
 	<a href="?lang=de">{% trans "German: %}</a>
 
   <p>
-  {% blocktrans %}
-  
+{% blocktrans %}
     (software engineering) The act or process of making a product suitable for 
     international markets, typically by making text messages easily translatable 
     and ensuring support of non-Latin character sets.
-    
-	{% endblocktrans %}
+{% endblocktrans %}
 	</p>
 
 </div>
@@ -31,7 +29,7 @@
 
 <div id="content">
   <h2>{% trans "Pluralization support" %}</h2>
-  
+    <p>
 	{% blocktrans count=users.length %}
 	    there is one {{ count }} item.
 	{% plural %}

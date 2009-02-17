@@ -1,16 +1,21 @@
 <?php
-
 require '../../h2o.php';
 
 $template = new H2o('trans.html', array(
     'cache'=> false,
     'i18n' => array(
         'locale' => isset($_GET['lang']) ? $_GET['lang'] : false,
+        'charset' => 'UTF-8',
         'gettext_path' => '../bin/gettext/bin/',
         'extract_message' => true,
         'compile_message' => true,
     )
 ));
+
+# Setup custom gettext resolver
+
+
+$time_start = microtime(true);
 
 echo $template->render(array(
     'users' => array(
@@ -36,5 +41,6 @@ echo $template->render(array(
         )
     )
 ));
+echo "in ".(microtime(true) - $time_start)." seconds\n<br/>";
 
 ?>

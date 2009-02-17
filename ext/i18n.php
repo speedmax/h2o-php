@@ -11,7 +11,8 @@ class Trans_Tag extends H2o_Node {
     
     function render($context, $stream) {
         if ($this->text) {
-            $stream->write(gettext($this->text));
+            $gettext = H2o_I18n::$gettext;
+            $stream->write(call_user_func($gettext, $this->text));
         }
     }
 }
@@ -38,6 +39,7 @@ class Blocktrans_Tag extends H2o_Node {
 
         # Parse singular and plural block
         $this->singular = $parser->parse('plural', 'endblocktrans');
+        
         if ($parser->token->content === 'plural') {
             $this->plural = $parser->parse('endblocktrans');
         }
@@ -74,7 +76,12 @@ class Blocktrans_Tag extends H2o_Node {
             $this->count = count($this->count);
             
         # Get translation
-        $output = ngettext($this->singular, $this->plural, $this->count);
+        $ngettext = H2o_I18n::$ngettext;
+        $gettext = H2o_I18n::$gettext;
+        if ($this->plural)
+            $output = call_user_func($ngettext, $this->singular, $this->plural, $this->count);
+        else
+            $output = call_user_func($gettext, $this->singular);
 
         # Variable in output
         foreach(array_keys($this->vars) as $var) {
@@ -107,11 +114,14 @@ class Blocktrans_Tag extends H2o_Node {
 
 class H2o_I18n {
     var $locale;
+    var $charset = 'UTF-8';
     var $locale_dir;
     var $tmp_dir;
     var $extensions = array('html','tpl');
     var $gettext_path = '';
     var $gettext_setup = false;
+    static $gettext = 'gettext';
+    static $ngettext = 'ngettext';
     
     function __construct($path, $options = array()) {
         if (is_file($path))
@@ -121,7 +131,6 @@ class H2o_I18n {
         $this->locale_dir = $this->searchpath .'locale'.DS;
         $this->options = $options;
         
-
         if (isset($options['tmp_dir']))
             $this->tmp_dir = $options['tmp_dir'];
         else
@@ -129,35 +138,34 @@ class H2o_I18n {
         
         if (isset($options['ext']))
             $this->extensions = $options['ext'];
-
-        if (isset($options['locale']) && $options['locale']) {
+            
+        if (isset($options['charset']))
+            $this->charset = $options['charset'];
+            
+        if (isset($options['locale']) && $options['locale'])
             $this->setLocale($options['locale']);
-        }
         
-        if (isset($options['extract_message']) && $options['extract_message']) {
+        if (isset($options['extract_message']) && $options['extract_message'])
             $this->extract();
-        }
         
-        if (isset($options['compile_message']) && $options['compile_message']) {
+        if (isset($options['compile_message']) && $options['compile_message'])
             $this->compile();
-        }
         
-        if (!is_dir($this->locale_dir) && !mkdir($this->locale_dir)) {
+        if (!is_dir($this->locale_dir) && !mkdir($this->locale_dir))
             throw new Exception('locale directory not found and failed to created '.$this->searchpath);
-        }
     }
     
     function gettext($name, $context) {
+        $gettext = self::$gettext;
         if (!is_string($name)) return ;
         $syntax = '/_\(((?:".*?")|(?:\'.*?\'))\)/';
         if (preg_match($syntax, $name, $match)) {
             $text = stripcslashes(substr($match[1], 1, -1));
-            return gettext($text);
+            return call_user_func($gettext, $text);
         }
     }
     
     function setupGettext() {
-        
         if (isset($this->options['gettext_path']))
             $this->gettext_path = $this->options['gettext_path'];
 
@@ -280,13 +288,17 @@ class H2o_I18n {
       }
     }
     
-    function setLocale($locale) {
+    function setLocale($locale, $charset = null) {
         $this->locale = $locale;
+        if (!$charset)
+            $charset = $this->charset;
+        
         putenv("LC_ALL={$locale}");
         setlocale(LC_ALL, $locale);
         if (!is_dir($this->locale_dir))
             throw new Exception('Cannot find Locale message path');
         bindtextdomain("messages", $this->locale_dir);
+        bind_textdomain_codeset('messages', $charset);
         textdomain("messages");
     }
     

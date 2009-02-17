@@ -126,31 +126,25 @@ class H2o_Context implements ArrayAccess {
         foreach ($parts as $part) {
             if (is_array($object) or $object instanceof ArrayAccess) {
                 if (isset($object[$part]))
-                    $object = $object[$part]; 
-                # Support array short cuts
-                elseif (isset($this->arrayMethods[$part])) {
-                    $size = count($object);
-                    $shortcut = array_combine(
-                        array_flip($this->arrayMethods), 
-                        array(0, $size - 1, $size, $size)
-                    );
-    
-                    if ($part === 'size' || $part === 'length')
-                        $object = $shortcut[$part];
-                    else
-                        $object = $object[$shortcut[$part]];
-                } 
+                    $object =& $object[$part];
+                elseif ($part === 'first')
+                    $object =& $object[0];
+                elseif ($part === 'last')
+                    $object =& $object[count($object) -1];
+                elseif ($part === 'size' or $part === 'length')
+                    return count($object);
                 else return null;
             }
             elseif (is_object($object)) {
-                $classAllowed =  in_array(get_class($object), $this->safeClass) || 
-                                 (isset($object->h2o_safe) && true === $object->h2o_safe) ||
-                                   (isset($object->h2o_safe) && in_array($part, $object->h2o_safe));
-
-                if (is_callable(array($object, $part)) && $classAllowed) {
-                    $object = $object->$part();
-                } elseif (property_exists($object, $part)) {
+                if (isset($object->$part))
                     $object = $object->$part;
+                elseif (is_callable(array($object, $part))) {
+                    $methodAllowed = in_array(get_class($object), $this->safeClass) || 
+                        (isset($object->h2o_safe) && (
+                            $object->h2o_safe === true || in_array($part, $object->h2o_safe)
+                        )
+                    );
+                    $object = $methodAllowed ? $object->$part() : null;
                 }
                 else return null;
             }
