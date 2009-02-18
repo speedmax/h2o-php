@@ -5,7 +5,7 @@
 
 class H2o_Node {
     var $position;
-	function __construct($parser, $argstring) {}
+	function __construct($argstring) {}
 	
 	function render($context, $stream) {}
 }
