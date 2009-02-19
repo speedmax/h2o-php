@@ -3,7 +3,7 @@ H2O template markup
 
 
 
-H2o template 
+H2o template
 ------------------------
 H2O is markup language for PHP that taken a lot of inspiration from django.
 

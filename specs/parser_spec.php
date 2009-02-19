@@ -78,5 +78,4 @@ class Describe_Argument_Lexer extends SimpleSpec {
 class Describe_Lexer extends SimpleSpec {}
 
 class Describe_Parser extends SimpleSpec {}
-
 ?>
