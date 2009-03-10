@@ -126,11 +126,11 @@ class H2o_Context implements ArrayAccess {
         foreach ($parts as $part) {
             if (is_array($object) or $object instanceof ArrayAccess) {
                 if (isset($object[$part]))
-                    $object =& $object[$part];
+                    $object = $object[$part];
                 elseif ($part === 'first')
-                    $object =& $object[0];
+                    $object = $object[0];
                 elseif ($part === 'last')
-                    $object =& $object[count($object) -1];
+                    $object = $object[count($object) -1];
                 elseif ($part === 'size' or $part === 'length')
                     return count($object);
                 else return null;

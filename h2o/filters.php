@@ -79,7 +79,7 @@ class StringFilters extends FilterCollection {
     }
     
     static function truncate ($string, $max = 50, $ends = '...') {
-        return substr_replace($string, $ends, $max - strlen($ends));
+        return str_replace($string, $ends, $max - strlen($ends));
     }
     
     static function limitwords($text, $limit = 50, $ends = '...') {

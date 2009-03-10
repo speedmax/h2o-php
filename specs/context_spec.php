@@ -121,7 +121,7 @@ class Describe_array_lookup extends SimpleSpec {
     }
 }
 
-class Describe_context_lookup extends SimpleSpec {
+class Describe_object_context_lookup extends SimpleSpec {
     
     function should_use_dot_to_access_object_property() {
         $c = create_context(array(
@@ -165,6 +165,16 @@ class Describe_context_lookup extends SimpleSpec {
         expects($c->resolve(':document._secret'))->should_be_null();   // Private
         expects($c->resolve(':document.undefined_method'))->should_be_null();
     }
+    
+    
+    function should_resolve_overloaded_attributes() {
+        $c = create_context(array(
+            'person' => $p = new Person
+        ));
+
+        expects($c->resolve(':person.name'))->should_be('The king');
+        expects($c->resolve(':person.age'))->should_be(19);
+    }
 }
 
 class Document {
@@ -187,6 +197,23 @@ class Document {
 
     function _secret() {
         return "secret no longer";
+    }
+}
+
+class Person {
+    var $data = array(
+        'name' => 'The king',
+        'age' => 19
+    );
+    
+    function __get($attr) {
+        if (isset($this->data[$attr]))
+            return $this->data[$attr];
+        return null;
+    }
+    
+    function __isset($attr) {
+        return !is_null($this->$attr);
     }
 }
 
