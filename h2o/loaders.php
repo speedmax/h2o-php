@@ -58,7 +58,7 @@ class H2o_File_Loader extends H2o_Loader {
         if (!$object || $object && $this->expired($object)) {
             $nodelist = $this->read($filename);
             $object = (object) array(
-                'filename' => basename($filename),
+                'filename' => $filename,
                 'content' => serialize($nodelist),
                 'created' => time(),
                 'templates' => $nodelist->parser->storage['templates'],
