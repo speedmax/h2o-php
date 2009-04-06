@@ -203,8 +203,8 @@ class HtmlFilters extends FilterCollection {
 
     static function linebreaks($value, $format = 'p') {
         if ($format == 'br')
-        return h2o_nl2br($value);
-        return nl2pbr($value);
+            return HtmlFilters::nl2br($value);
+        return HtmlFilters::nl2pbr($value);
     }
     
     static function nl2br($value) {
@@ -215,7 +215,7 @@ class HtmlFilters extends FilterCollection {
         $result = array();
         $parts = preg_split('/(\r?\n){2,}/m', $value);
         foreach ($parts as $part) {
-            array_push($result, '<p>' . h2o_nl2br($part) . '</p>');
+            array_push($result, '<p>' . HtmlFilters::nl2br($part) . '</p>');
         }
         return implode("\n", $result);
     }
@@ -246,7 +246,8 @@ class DatetimeFilters extends FilterCollection {
     }
 
     static function relative_time($timestamp, $format = 'g:iA') {
-        $timestamp = strtotime($timestamp);
+        $timestamp = is_numeric($timestamp) ? $timestamp: strtotime($timestamp);
+        
         $time   = mktime(0, 0, 0);
         $delta  = time() - $timestamp;
         $string = '';
@@ -274,7 +275,7 @@ class DatetimeFilters extends FilterCollection {
     }
 
     static function relative_date($time) {
-        $time = strtotime($time);
+        $time = is_numeric($time) ? $time: strtotime($time);
         $today = strtotime(date('M j, Y'));
         $reldays = ($time - $today)/86400;
         if ($reldays >= 0 && $reldays < 1) {

@@ -50,8 +50,10 @@ class H2o_File_Loader extends H2o_Loader {
     function read_cache($filename) {
         if (!$this->cache)
              return $this->read($filename);
-
-        $file_path = $this->searchpath . $filename;
+        if (!is_file($filename))
+            $file_path = $this->searchpath . $filename;
+        $filename = realpath($filename);
+        
         $cache = md5($filename);
         $object = $this->cache->read($cache);
         
