@@ -46,7 +46,7 @@ class NodeList extends H2o_Node implements IteratorAggregate  {
 }
 
 class VariableNode extends H2o_Node {
-    private $filters = false;
+    private $filters = array();
     var $variable;
     
 	function __construct($variable, $filters, $position = 0) {
@@ -57,8 +57,7 @@ class VariableNode extends H2o_Node {
 
 	function render($context, $stream) {
         $value = $context->resolve($this->variable);
-		if ($this->filters)
-		  $value = $context->applyFilters($value, $this->filters);
+        $value = $context->applyFilters($value, $this->filters);
 		$stream->write($value);
 	}
 }

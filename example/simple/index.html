@@ -4,7 +4,11 @@
   <h2>Userlist</h2>
   <ul>
   {% for user in users limit:3 %}
-    <li><a href="/users/{{ user.username|urlencode|escape }}">{{ user.username|escape }}</a></li>
+    <li>
+      <a href="/users/{{ user.username|urlencode }}">{{ user.username }}</a> -
+      
+      {{ user.tasks.first | safe }}
+    </li>
     
     {% if not user.username == 'foobar' %}
         haha

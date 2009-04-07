@@ -2,7 +2,7 @@
 require_once 'spec_helper.php';
 
 class Describe_local_variable extends SimpleSpec {
-    
+
     function should_retrive_variable_using_array_interface() {
         $c = create_context(array(
             'name' => 'peter',
@@ -66,9 +66,19 @@ class Describe_context_lookup_basic_data_types extends SimpleSpec {
     }
     
     function should_resolve_a_string() {
-        $c= new H2o_Context;
+        $c= create_context();
         expects($c->resolve('"something"'))->should_be('something');
         expects($c->resolve("'he hasn\'t eat it yet'"))->should_be("he hasn't eat it yet");
+    }
+    
+    function should_escape_output_by_default() {
+        $a = '<script>danger</script>';
+        $b = '<h1>Welcome</h1>';
+        $c = create_context(compact('a','b'));
+        
+        expects(h2o('{{ a }}')->render($c))->should_be('&lt;script&gt;danger&lt;/script&gt;');
+        expects(h2o('{{ b|safe }}')->render($c))->should_be('<h1>Welcome</h1>');
+        
     }
 }
 

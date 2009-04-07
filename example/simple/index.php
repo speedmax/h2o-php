@@ -17,13 +17,13 @@ $time_start = microtime(true);
 echo $template->render(array(
     'users' => array(
         array(
-            'username' =>           'peter',
+            'username' =>           'peter <h1>asdfasdf</h1>',
             'tasks' => array('school', 'writing'),
             'user_id' =>            1,
         ),
         array(
             'username' =>           'anton',
-            'tasks' => array('go shopping'),
+            'tasks' => array('go shopping <h1>je</h1'),
             'user_id' =>            2,
         ),
         array(

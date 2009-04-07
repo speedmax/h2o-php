@@ -343,5 +343,23 @@ class Now_Tag extends H2o_Node {
     }
 }
 
-H2o::addTag(array('block', 'extends', 'include', 'if', 'for', 'with', 'cycle', 'load', 'debug', 'now'));
+class Autoescape_Tag extends H2o_Node {
+    protected $enable;
+    
+    function __constrcut($argstring, $parser, $pos = 0) {
+        if ($argstring === 'on')
+            $this->enable = true;
+        elseif ($argstring === 'off')
+            $this->enable = false;
+        else throw new H2o_Error(
+            "Invalid syntax : autoescape on|off "
+        );
+    }
+    
+    function render($context, $stream) {
+        $context->autoescape = $this->enable;
+    }
+}
+
+H2o::addTag(array('block', 'extends', 'include', 'if', 'for', 'with', 'cycle', 'load', 'debug', 'now', 'autoescape'));
 ?>

@@ -23,7 +23,7 @@ class CoreFilters extends FilterCollection {
                 $result .= $name.'='.urlencode($value).'&'.$querystring;
             }
             $querystring = substr($result, 0, strlen($result)-1);
-            return htmlentities($result);
+            return htmlspecialchars($result);
         } else {
             return urlencode($data);
         }
@@ -74,8 +74,16 @@ class StringFilters extends FilterCollection {
         return htmlspecialchars($value, $attribute ? ENT_QUOTES : ENT_NOQUOTES);
     }
     
+    static function force_escape($value, $attribute = false) {
+        return self::escape($value, $attribute);
+    }
+    
     static function e($value, $attribute = false) {
         return self::escape($value, $attribute);
+    }
+    
+    static function safe($value) {
+        return $value;
     }
     
     static function truncate ($string, $max = 50, $ends = '...') {
@@ -97,9 +105,9 @@ class StringFilters extends FilterCollection {
 
 class NumberFilters extends FilterCollection {
     static function filesize ($bytes, $round = 1) {
-        if ($bytes==0)
+        if ($bytes === 0)
             return '0 bytes';
-        elseif ($bytes==1)
+        elseif ($bytes === 1)
             return '1 byte';
     
         $units = array(
@@ -146,7 +154,7 @@ class NumberFilters extends FilterCollection {
 
         // Get rid of negative zero
         $zero = round(0, $precision);
-        if (round($amount, $precision) == $zero) {
+        if (round($amount, $precision) === $zero) {
             $amount = $zero;
         }
     
@@ -202,7 +210,7 @@ class HtmlFilters extends FilterCollection {
     }
 
     static function linebreaks($value, $format = 'p') {
-        if ($format == 'br')
+        if ($format === 'br')
             return HtmlFilters::nl2br($value);
         return HtmlFilters::nl2pbr($value);
     }
@@ -242,10 +250,16 @@ class HtmlFilters extends FilterCollection {
 
 class DatetimeFilters extends FilterCollection {
     static function date($time, $format = 'jS F Y H:i') {
+        if ($time instanceof DateTime) 
+            $time  = (int) $time->format('U');
+
         return date($format, strtotime($time));
     }
 
     static function relative_time($timestamp, $format = 'g:iA') {
+        if ($timestamp instanceof DateTime) 
+            $timestamp = (int) $timestamp->format('U');
+
         $timestamp = is_numeric($timestamp) ? $timestamp: strtotime($timestamp);
         
         $time   = mktime(0, 0, 0);
@@ -275,17 +289,20 @@ class DatetimeFilters extends FilterCollection {
     }
 
     static function relative_date($time) {
+        if ($time instanceof DateTime) 
+            $time = (int) $time->format('U');
+
         $time = is_numeric($time) ? $time: strtotime($time);
         $today = strtotime(date('M j, Y'));
         $reldays = ($time - $today)/86400;
-        if ($reldays >= 0 && $reldays < 1) {
-            return 'today';
-        } else if ($reldays >= 1 && $reldays < 2) {
-            return 'tomorrow';
-        } else if ($reldays >= -1 && $reldays < 0) {
-            return 'yesterday';
-        }
         
+        if ($reldays >= 0 && $reldays < 1)
+            return 'today';
+        else if ($reldays >= 1 && $reldays < 2)
+            return 'tomorrow';
+        else if ($reldays >= -1 && $reldays < 0)
+            return 'yesterday';
+
         if (abs($reldays) < 7) {
             if ($reldays > 0) {
                 $reldays = floor($reldays);
@@ -295,18 +312,18 @@ class DatetimeFilters extends FilterCollection {
                 return $reldays . ' day'  . ($reldays != 1 ? 's' : '') . ' ago';
             }
         }
-        if (abs($reldays) < 182) {
+        if (abs($reldays) < 182)
             return date('l, F j',$time ? $time : time());
-        } else {
+        else
             return date('l, F j, Y',$time ? $time : time());
-        }
     }
     
     static function relative_datetime($time) {
         $date = self::relative_date($time);
-        if ($date == 'today') {
+        
+        if ($date === 'today')
             return self::relative_time($time);
-        }
+        
         return $date;
     }
 }

@@ -8,6 +8,7 @@ class H2o_Context implements ArrayAccess {
     var $safeClass = array('stdClass', 'BlockContext');
     var $scopes;
     var $options;
+    var $autoescape = true;
     private $arrayMethods = array('first'=> 0, 'last'=> 1, 'length'=> 2, 'size'=> 3);
     static $lookupTable = array();
     
@@ -154,11 +155,17 @@ class H2o_Context implements ArrayAccess {
     }
 
     function applyFilters($object, $filters) {
+        $safe = false;
+        
         foreach ($filters as $filter) {
             $name = substr(array_shift($filter), 1);
             $args = $filter;
-            if (isset(h2o::$filters[$name])) {
-                
+            $safe = !$safe && $name === 'safe';
+            
+            if ($this->autoescape && $escaped = $name === 'escape')
+                continue;
+            
+            if (isset(h2o::$filters[$name])) {                
                 foreach ($args as $i => $argument) {
                     # name args
                     if (is_array($argument)) {
@@ -173,6 +180,11 @@ class H2o_Context implements ArrayAccess {
                 array_unshift($args, $object);
                 $object = call_user_func_array(h2o::$filters[$name], $args);
             }
+        }
+        $should_escape = $this->autoescape || isset($escaped) && $escaped;
+        
+        if ($should_escape && !$safe) {
+            $object = htmlspecialchars($object);
         }
         return $object;
     }
