@@ -40,7 +40,7 @@ class NodeList extends H2o_Node implements IteratorAggregate  {
         return count($this->list);
     }
     
-    public function getIterator() {
+    function getIterator() {
         return new ArrayIterator( $this->list );
     }
 }

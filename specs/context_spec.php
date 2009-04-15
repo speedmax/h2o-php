@@ -79,6 +79,13 @@ class Describe_context_lookup_basic_data_types extends SimpleSpec {
         expects(h2o('{{ a }}')->render($c))->should_be('&lt;script&gt;danger&lt;/script&gt;');
         expects(h2o('{{ b|safe }}')->render($c))->should_be('<h1>Welcome</h1>');
         
+        # disable autoescape as option
+        expects(h2o('{{ a }}', array('autoescape' => false))->render(compact('a','b')))->should_be($a);
+        
+        # disable autoescape on context object
+        $c->autoescape = false;
+        expects(h2o('{{ a }}')->render($c))->should_be($a);
+        
     }
 }
 

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * 
  * @author taylor.luk
@@ -7,21 +6,21 @@
  */
 class H2o_Loader {
     public $parser;
+    public $runtime;
+    public $cached = false;
+    private $cache = false;
+    public $searchpath = false;
+    
     function read($filename) {}
     function cache_read($file, $object, $ttl = 3600) {}
 }
 
 class H2o_File_Loader extends H2o_Loader {
-    public $parser;
-    public $runtime;
-    private $cache = false;
-    public $searchpath;
-    
+
     function __construct($searchpath, $options = array()) {
         if (is_file($searchpath)) {
             $searthpath = dirname($searchpath).DS;
         }
-        
         if (!is_dir($searchpath))
             throw new TemplateNotFound($filename);
 
@@ -36,28 +35,30 @@ class H2o_File_Loader extends H2o_Loader {
     }
     
     function read($filename) {
-        
-       if (!file_exists($filename))
-        $filename = $this->searchpath . $filename;
-       
-       if (!file_exists($filename))
-           throw new TemplateNotFound($filename);
+        if (!is_file($filename))
+            $filename = $this->searchpath . $filename;
 
-       $source = file_get_contents($filename);
-       return $this->runtime->parse($source);
+        if (is_file($filename)) {
+            $source = file_get_contents($filename);
+            return $this->runtime->parse($source);
+        } else {
+            throw new TemplateNotFound($filename);
+        }
     }
 
     function read_cache($filename) {
         if (!$this->cache)
              return $this->read($filename);
+
         if (!is_file($filename))
-            $file_path = $this->searchpath . $filename;
+            $filename = $this->searchpath . $filename;
+
         $filename = realpath($filename);
-        
         $cache = md5($filename);
         $object = $this->cache->read($cache);
+        $this->cached = $object && !$this->expired($object);
         
-        if (!$object || $object && $this->expired($object)) {
+        if (!$this->cached) {
             $nodelist = $this->read($filename);
             $object = (object) array(
                 'filename' => $filename,
@@ -69,7 +70,7 @@ class H2o_File_Loader extends H2o_Loader {
             $this->cache->write($cache, $object);
         } else {
             foreach($object->included as $ext => $file) {
-                include_once(h2o::$extensions[$ext] = $file);
+                include_once (h2o::$extensions[$ext] = $file);
             }
         }
         return unserialize($object->content);
@@ -80,9 +81,14 @@ class H2o_File_Loader extends H2o_Loader {
     }
 
     function expired($object) {
+        if (!$object) return false;
+        
         $files = array_merge(array($object->filename), $object->templates);
         foreach ($files as $file) {
-            if (filemtime($this->searchpath.$file) > $object->created)
+            if (!is_file($file))
+                $file = $this->searchpath.$file;
+            
+            if ($object->created < filemtime($file))
                 return true;
         }
         return false;
@@ -94,10 +100,7 @@ function file_loader($file) {
 }
 
 class H2o_Hash_Loader {
-    public $parser;
-    public $runtime;
-    public $searchpath = false;
-    
+
     function __construct($scope, $options = array()) {
         $this->scope = $scope;
     }
@@ -119,12 +122,10 @@ function hash_loader($hash = array()) {
     return new H2o_Hash_Loader($hash);
 }
 
-
 /**
  * Cache subsystem
  *
  */
-
 function h2o_cache($options = array()) {
     $type = $options['cache'];
     $className = "H2o_".ucwords($type)."_Cache";
@@ -144,9 +145,9 @@ class H2o_File_Cache {
             $path = $options['cache_dir'];
         } else {
             $path = dirname($tmp = tempnam(uniqid(rand(), true), ''));
+
             if (file_exists($tmp)) unlink($tmp);
         }
-        
         if (isset($options['cache_ttl'])) {
             $this->ttl = $options['cache_ttl'];
         }

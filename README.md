@@ -14,11 +14,25 @@ H2O is markup language for PHP that taken a lot of inspiration from django.
  * Bundled rich set of filters and tags for string formatting, HTML helpers and 
    internationalization. 
 
+
 Requirement
 ------------------------
 
  - PHP 5.1 +
 
+
+News
+------------------------
+
+ - version 0.4 
+   1. **Breaking changes** autoescape is now turned on by default
+   2. Improved searchpath and file loading handling
+   3. Improved Handling on PHP overloaded objects
+   4. Plenty of bug fixes
+ - version 0.3
+   1. Support internationalized templates and translation parsing toolkit
+   2. Performance optimization on context lookup
+   3. Fixed operator pasing
 
 Getting started
 ------------------------
@@ -66,7 +80,7 @@ With SVN
 
     <?php
         require 'h2o/h2o.php';
-        $h2o = new h2o('index.html');
+        $h2o = new h2o('templates/index.html');
         echo $h2o->render(array('name'=>'Peter Jackson'));
     ?>
 

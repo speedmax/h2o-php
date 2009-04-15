@@ -34,7 +34,8 @@ class H2o {
             'cache_prefix'      =>      'h2o_',
             'cache_ttl'         =>      3600,     // file | apc | memcache
             'searchpath'        =>      false,
-  
+            'autoescape'        =>      true,
+        
             // Enviroment setting
             'BLOCK_START'       =>      '{%',
             'BLOCK_END'         =>      '%}',
@@ -66,7 +67,7 @@ class H2o {
                 $this->searchpath = realpath($options['searchpath']).DS;
             else
                 $this->searchpath = dirname(realpath($file)).DS;
-            $this->loader = new $loaderClass($this->searchpath, $this->options);
+            $this->loader = new $loaderClass($this->searchpath, $this->options);        
         }
         
         if (isset($options['i18n'])) {
@@ -134,8 +135,8 @@ class H2o {
         return $this->stream->close();
     }
 
-    static function parseString($source) {
-        $instance = new H2o(null, array('loader' => false));
+    static function parseString($source, $options = array()) {
+        $instance = new H2o(null, array_merge($options, array('loader' => false)));
         $instance->nodelist = $instance->parse($source);
         return $instance;
     }
@@ -253,9 +254,9 @@ function h2o($name, $options = array()) {
     $is_file = '/([^\s]*?)(\.[^.\s]*$)/';
     
     if (!preg_match($is_file, $name)) {
-        return H2o::parseString($name); 
+        return H2o::parseString($name, $options); 
     }
-    
+
     $instance = new H2o($name, $options);
     return $instance;
 }

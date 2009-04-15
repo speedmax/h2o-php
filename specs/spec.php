@@ -37,7 +37,7 @@
  * @license Free for all  
  */
 
-class SimpleSpec extends UnitTestCase implements ArrayAccess {
+class SimpleSpec extends UnitTestCase {
     public $target;
     private $negate;
     private $matcher;
@@ -138,17 +138,6 @@ function expects($subject) {
     $object = $trace[1]['object'];
     return $object->expect($subject);
 }
-
-class SpecProxy {
-    function __construct($class) {
-        $this->object = new $class;
-    }
-    
-    function __call($method, $args) {
-        return user_call_func_array(array($this->object, $method), $args);
-    }
-}
-
 
 class Have_Matcher {
     function __construct($subject, $count, $runtime) {
