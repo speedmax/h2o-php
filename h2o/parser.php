@@ -122,6 +122,9 @@ class H2o_Parser {
                     $result[] = $filter_buffer;
                 $current_buffer = &$result;
             }
+            elseif ($token == 'boolean') {
+                $current_buffer[] = ($data === 'true'? true : false);
+            }            
             elseif ($token == 'name') {
                 $current_buffer[] = symbol($data);
             }
@@ -137,13 +140,8 @@ class H2o_Parser {
                 list($name,$value) = array_map('trim', explode(':', $data, 2));
                 
                 # if argument value is variable mark it
-                $ap = new ArgumentLexer($value);
-                $t = $ap->parse();
-
-                if (isset($t[0][0]) && $t[0][0] == 'name' && $value !== 'true' && $value !== 'false') {
-                    $value = symbol($value);
-                }
-                $namedArgs[$name] = $value;
+                $value = self::parseArguments($value);
+                $namedArgs[$name] = $value[0];
             }
             elseif( $token == 'operator') {
                 $current_buffer[] = array('operator'=>$data);
@@ -154,8 +152,7 @@ class H2o_Parser {
 }
 
 class H2O_RE {
-    static  $whitespace, $seperator, $parentheses, $pipe, $filter_end, $operator,
-            $number,  $string, $i18n_string, $name, $named_args;
+    static $whitespace, $seperator, $parentheses, $pipe, $filter_end, $operator, $boolean, $number,  $string, $i18n_string, $name, $named_args;
 
     function init() {
         $r = 'strip_regex';
@@ -163,6 +160,7 @@ class H2O_RE {
         self::$whitespace   = '/\s+/m';
         self::$parentheses  = '/\(|\)/m';
         self::$filter_end   = '/;/';
+        self::$boolean    = '/true|false/';
         self::$seperator    = '/,/';
         self::$pipe         = '/\|/';
         self::$operator     = '/\s?(>|<|>=|<=|!=|==|!|and |not |or )\s?/i';
@@ -210,6 +208,8 @@ class ArgumentLexer {
                         $operator = $this->operator_map[$operator];
                     $result[] = array('operator', $operator);
                 }
+                elseif ($this->scan(H2O_RE::$boolean))
+                    $result[] = array('boolean', $this->match);
                 elseif ($this->scan(H2O_RE::$named_args))
                     $result[] = array('named_argument', $this->match);                      
                 elseif ($this->scan(H2O_RE::$name))
@@ -239,6 +239,8 @@ class ArgumentLexer {
                     $result[] = array('filter_end', null);
                     $filtering = false;
                 }
+                elseif ($this->scan(H2O_RE::$boolean))
+                    $result[] = array('boolean', $this->match);
                 elseif ($this->scan(H2O_RE::$named_args))
                     $result[] = array('named_argument', $this->match);
                 elseif ($this->scan(H2O_RE::$name))
