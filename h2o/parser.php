@@ -6,7 +6,7 @@ class H2o_Lexer {
         if ($this->options['TRIM_TAGS'])
             $trim = '(?:\r?\n)?';
 
-        $this->pattern = ('/(.*?)(?:' .
+        $this->pattern = ('/\G(.*?)(?:' .
             preg_quote($this->options['BLOCK_START']). '(.*?)' .preg_quote($this->options['BLOCK_END']) . $trim . '|' .
             preg_quote($this->options['VARIABLE_START']). '(.*?)' .preg_quote($this->options['VARIABLE_END']) . '|' .
             preg_quote($this->options['COMMENT_START']). '(.*?)' .preg_quote($this->options['COMMENT_END']) . $trim . ')/sm'
