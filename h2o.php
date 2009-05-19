@@ -47,7 +47,7 @@ class H2o {
         ), $options);
     }
     
-    function __construct($file = false, $options = array()) {
+    function __construct($file = null, $options = array()) {
         # Init a environment
         $this->options = $this->getOptions($options);        
         $loader = $this->options['loader'];
@@ -62,25 +62,24 @@ class H2o {
             $loader = "H2o_{$loader}_Loader";
             if (!class_exists($loader))
                 throw new Exception('Invalid template loader');
-            
-            # Best effort to guess searchpath
+                
             if (isset($options['searchpath']))
                 $this->searchpath = realpath($options['searchpath']).DS;
             elseif ($file)
                 $this->searchpath = dirname(realpath($file)).DS;
             else
                 $this->searchpath = getcwd().DS;
+
             $this->loader = new $loader($this->searchpath, $this->options);        
         }
         
-        #i18n
         if (isset($options['i18n'])) {
             h2o::load('i18n');
             $this->i18n = new H2o_I18n($this->searchpath, $options['i18n']);
         }
-        
+    
         if ($file) {
-          $this->nodelist = $this->loadTemplate($file);
+            $this->nodelist = $this->loadTemplate($file);
         }
         
         $this->loader->runtime = $this;
