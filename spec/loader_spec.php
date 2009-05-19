@@ -14,8 +14,11 @@ class Describe_file_loader extends SimpleSpec {
         
         $h2o = h2o('templates/emails/base.html');
         expects($h2o->nodelist)->should_be_a('Nodelist');
+        
+        $h2o = new H2o('a.html', array('searchpath' => 'templates'));
+        expects($h2o->render())->should_not_be_empty();
     }
-    
+
     function should_read_from_alternitive_working_path() {
         $h2o = h2o('emails/base.html', array(
             'searchpath' => dirname(__FILE__).DS.'templates'
