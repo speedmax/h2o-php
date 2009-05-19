@@ -72,6 +72,7 @@ class H2o {
 
             $this->loader = new $loader($this->searchpath, $this->options);        
         }
+        $this->loader->runtime = $this;
         
         if (isset($options['i18n'])) {
             h2o::load('i18n');
@@ -81,8 +82,6 @@ class H2o {
         if ($file) {
             $this->nodelist = $this->loadTemplate($file);
         }
-        
-        $this->loader->runtime = $this;
     }
 
     function loadTemplate($file) {
