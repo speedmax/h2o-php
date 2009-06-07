@@ -346,7 +346,7 @@ class Now_Tag extends H2o_Node {
 class Autoescape_Tag extends H2o_Node {
     protected $enable;
     
-    function __constrcut($argstring, $parser, $pos = 0) {
+    function __construct($argstring, $parser, $pos = 0) {
         if ($argstring === 'on')
             $this->enable = true;
         elseif ($argstring === 'off')
