@@ -154,7 +154,7 @@ class H2o_Parser {
 class H2O_RE {
     static $whitespace, $seperator, $parentheses, $pipe, $filter_end, $operator, $boolean, $number,  $string, $i18n_string, $name, $named_args;
 
-    function init() {
+    static function init() {
         $r = 'strip_regex';
         
         self::$whitespace   = '/\s+/m';
