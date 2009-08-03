@@ -20,25 +20,25 @@ class StreamWriter {
 }
 
 class Evaluator {
-    function gt($l, $r) { return $l > $r; }
-    function ge($l, $r) { return $l >= $r; }
+    static function gt($l, $r) { return $l > $r; }
+    static function ge($l, $r) { return $l >= $r; }
 
-    function lt($l, $r) { return $l < $r; }
-    function le($l, $r) { return $l <= $r; }
+    static function lt($l, $r) { return $l < $r; }
+    static function le($l, $r) { return $l <= $r; }
 
-    function eq($l, $r) { return $l == $r; }
-    function ne($l, $r) { return $l != $r; }
+    static function eq($l, $r) { return $l == $r; }
+    static function ne($l, $r) { return $l != $r; }
 
-    function not_($bool) { return !$bool; }
-    function and_($l, $r) { return ($l && $r); }
-    function or_($l, $r) { return ($l && $r); }
+    static function not_($bool) { return !$bool; }
+    static function and_($l, $r) { return ($l && $r); }
+    static function or_($l, $r) { return ($l && $r); }
 
     # Currently only support single expression with no preceddence ,no boolean expression
     #    [expression] =  [optional binary] ? operant [ optional compare operant]
     #    [operant] = variable|string|numeric|boolean
     #    [compare] = > | < | == | >= | <=
     #    [binary]    = not | !
-    function exec($args, $context) {
+    static function exec($args, $context) {
         $argc = count($args);
         $first = array_shift($args);
         $first = $context->resolve($first);
