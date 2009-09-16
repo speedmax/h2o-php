@@ -42,7 +42,8 @@ class h2o_Tag_For extends h2o_Tag {
         $this->_data['from'] = $match['from']; // Mandatory
 
         if (!empty($match['key'])) {
-            $this->_data['key'] = $match['key'];
+            $this->_data['key']  = $match['item'];
+            $this->_data['item'] = $match['key'];
         }
 
         if (!empty($match['limit'])) {

@@ -44,6 +44,23 @@ class h2o_Node_Variable extends h2o_Node {
             $this->_variable = trim($contents);
             return;
         }
+
+        list($key, $filters) = explode('|', $contents, 2);
+
+        $this->_variable = trim($key);
+
+        // Parse the filter string
+        foreach (explode('|', $filters) as $filter) {
+            @list($filter, $arguments) = preg_split('/\s+/', trim($filter), 2);
+
+            if (!empty($arguments)) {
+                $arguments = preg_split('/\s+/', $arguments);
+            } else {
+                $arguments = array();
+            }
+
+            array_push($this->_filters, compact('filter', 'arguments'));
+        }
     }
 
     /**
@@ -55,6 +72,12 @@ class h2o_Node_Variable extends h2o_Node {
      * @todo Filter handling
      */
     public function render(h2o_Context $context) {
-        return $context->lookup($this->_variable);
+        $content = $context->lookup($this->_variable);
+
+        foreach ($this->_filters as $filter) {
+            $content = h2o_Filter::run($filter['filter'], $content, $filter['arguments']);
+        }
+
+        return $content;
     }
 }

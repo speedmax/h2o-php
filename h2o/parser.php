@@ -12,9 +12,19 @@
 /**
  * Parser and Tokenizer
  *
+ * @property-read array $First true if the current token is the first
+ * @property-read array $Runtime reference to the parent h2o object
  * @property-read array $Token the last tag token that was found
  */
 class h2o_Parser {
+    /**
+     * Is this the first token?
+     *
+     * @var bool
+     * @access private
+     */
+    private $_first = true;
+
     /**
      * The regex pattern
      * 
@@ -24,12 +34,22 @@ class h2o_Parser {
     private $_pattern;
 
     /**
+     * Reference to the parent h2o instance
+     * 
+     * @var h2o
+     * @access private
+     */
+    private $_runtime;
+
+    /**
      * Source we are parsing
      *
      * @var string
      * @access private
      */
     private $_source;
+    
+    public $storage = array('blocks' => array());
 
     /**
      * The last tag token that was found. Only tag tokens are stored in this
@@ -59,7 +79,7 @@ class h2o_Parser {
      * @see h2o::$_options
      * @see h2o::parse()
      */
-    public function __construct($source, array $options) {
+    public function __construct(h2o &$runtime, $source, array $options) {
         $trim  = $options['TRIM_TAGS'] ? '(?:\r?\n)?' : '';
 
         $this->_pattern = ('/\G(.*?)(?:'.
@@ -68,13 +88,18 @@ class h2o_Parser {
             preg_quote($options['COMMENT_START']).'(.*?)'.preg_quote($options['COMMENT_END']).$trim.')/sm'
         );
 
-        $this->_source = $source;
-        $this->_tokens = $this->tokenize($source);
+        $this->_runtime = $runtime;
+        $this->_source  = $source;
+        $this->_tokens  = $this->tokenize($source);
     }
 
     public function __get($key) {
-        if ($key == 'Token') {
-            return $this->_token;
+        switch ($key) {
+            case 'First':
+            case 'Runtime':
+            case 'Token':
+                $key = '_'.strtolower($key);
+                return $this->$key;
         }
 
         return null;
@@ -92,7 +117,7 @@ class h2o_Parser {
      */
     public function parse() {
         $until = func_get_args();
-        $nodes = new h2o_NodeStack;
+        $nodes = new h2o_NodeStack($this);
 
         while ($token = $this->_tokens->next()) {
             switch ($token['type']) {
@@ -127,6 +152,7 @@ class h2o_Parser {
             }
 
             $nodes->append($node);
+            $this->_first = false;
         }
 
         if ($until) {

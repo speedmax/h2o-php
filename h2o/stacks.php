@@ -54,6 +54,23 @@ class h2o_TokenStack {
 class h2o_NodeStack implements IteratorAggregate {
     private $_nodes = array();
 
+    private $_parser;
+
+    public $parent;
+
+    public function __construct(h2o_Parser $parser = null) {
+        $this->_parser = $parser;
+    }
+
+    public function __get($key) {
+        switch($key) {
+            case 'Parser':
+                return $this->_parser;
+        }
+
+        return null;
+    }
+
     public function append(h2o_Node $node) {
         array_push($this->_nodes, $node);
     }

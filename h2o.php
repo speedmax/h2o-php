@@ -119,9 +119,15 @@ class h2o {
      * @return h2o_NodeStack
      */
     public function parse($source, array $options = null) {
-        $parser = new h2o_Parser($source, is_null($options) ? $this->_options : $options);
+        $parser = new h2o_Parser($this, $source, is_null($options) ? $this->_options : $options);
 
         return $parser->parse();
+    }
+
+    public function parseFile($template) {
+        $source = $this->load($template);
+
+        return $this->parse($source);
     }
 
     /**
@@ -134,7 +140,7 @@ class h2o {
      * @return string
      */
     public function render($template, array $context = array()) {
-        $nodes   = $this->parse($this->load($template));
+        $nodes   = $this->parseFile($template);
         $context = new h2o_Context($context);
 
         return $nodes->render($context);
