@@ -56,7 +56,7 @@ class h2o {
     public function __construct(array $options = array()) {
         $this->_options = $options += array(
             'PATH'           => dirname(__FILE__).'/templates/',
-            'TRIM_TAGS'      => false,
+            'TRIM_TAGS'      => true,
             'TAG_START'      => '{%',
             'TAG_END'        => '%}',
             'VARIABLE_START' => '{{',
@@ -64,6 +64,10 @@ class h2o {
             'COMMENT_START'  => '{*',
             'COMMENT_END'    => '*}'
         );
+
+        if (substr($this->_options['PATH'], -1) != '/') {
+            $this->_options['PATH'] .= '/';
+        }
 
         spl_autoload_register(array(__CLASS__, 'autoload'));
     }
