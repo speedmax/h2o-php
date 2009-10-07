@@ -49,7 +49,15 @@ abstract class h2o_Filter {
     static public function add($filter, $callback = null) {
         static $depth = 0;
 
-        if (($filter instanceOf Traversable) || ($depth == 0 && is_array($filter))) {
+        if (is_string($filter) && class_exists($filter)) {
+            $filter = FilterCollection::keys($filter);
+
+            if (count($filter) == 0) {
+                return;
+            }
+        }
+
+        if (($filter instanceOf FilterCollection) || is_array($filter)) {
             if ($depth > self::$_depthLimit) {
                 throw new RuntimeException(sprintf('Filter::add has breached the '.
                     'maximum depth of `%d`', self::$_depthLimit));
@@ -58,6 +66,8 @@ abstract class h2o_Filter {
             foreach ($filter as $key => $callback) {
                 $depth++;
                 if ($callback instanceOf Traversable) {
+                    self::add($callback);
+                } else if (is_numeric($key)) {
                     self::add($callback);
                 } else {
                     self::add($key, $callback);
@@ -73,11 +83,18 @@ abstract class h2o_Filter {
         }
 
         if (!is_callable($callback)) {
-            var_dump($filter, $callback);
             throw new RuntimeException('Filter must be a valid callback');
         }
 
         self::$_filters[$filter] = $callback;
+    }
+
+    static public function exists($filter) {
+        return isset(self::$_filters[$filter]);
+    }
+
+    static public function export() {
+        return self::$_filters;
     }
 
     /**
@@ -102,30 +119,25 @@ abstract class h2o_Filter {
     }
 }
 
-abstract class FilterCollection implements IteratorAggregate {
-    protected $_auto = true;
+abstract class FilterCollection {
+    static public function keys($collection, $keys = false) {
+        static $cache = array();
 
-    private $_cache;
+        if (is_null($cache[$collection])) {
+            $data   = array();
+            $schema = new ReflectionClass($collection);
 
-    protected $_valid = array();
+            foreach ($schema->getMethods() as $method) {
+                if ($method->name == 'keys') continue;
 
-    public function getIterator() {
-        if (is_null($this->_cache)) {
-            $cache = new ArrayObject($this->_valid);
-
-            if ($this->_auto) {
-                $schema = new ReflectionClass(get_class($this));
-
-                foreach ($schema->getMethods() as $method) {
-                    if ($method->isPublic() && $method->isStatic()) {
-                        $cache[$method->name] = array($schema->name, $method->name);
-                    }
+                if ($method->isPublic() && $method->isStatic()) {
+                    $data[$method->name] = array($schema->name, $method->name);
                 }
             }
-            
-            $this->_cache = $cache;
+
+            $cache[$collection] = $data;
         }
 
-        return $this->_cache->getIterator();
+        return !$keys ? $cache[$collection] : array_keys($cache[$collection]);
     }
 }

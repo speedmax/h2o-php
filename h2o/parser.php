@@ -49,7 +49,7 @@ class h2o_Parser {
      */
     private $_source;
     
-    public $storage = array('blocks' => array());
+    public $storage = array('blocks' => array(), 'templates' => array());
 
     /**
      * The last tag token that was found. Only tag tokens are stored in this

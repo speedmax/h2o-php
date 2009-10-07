@@ -11,10 +11,13 @@
 
 defined('H2O_PATH') or define('H2O_PATH', dirname(__FILE__).'/');
 
-require_once H2O_PATH.'/ext/filters.php';
 require_once H2O_PATH.'/h2o/stacks.php';
 
 spl_autoload_register(array('h2o', 'autoload'));
+
+// Setup base tags and filters
+require_once H2O_PATH.'/ext/filters.php';
+h2o_Tag::add(array('if', 'for', 'extends', 'include', 'with', 'block'));
 
 /**
  * H2O is markup language for PHP that taken a lot of inspiration from Django.
@@ -108,10 +111,12 @@ class h2o {
         $file = H2O_PATH.'/'.strtolower(str_replace('_', '/', $className)).'.php';
 
         if (!is_file($file)) {
-            return;
+            return false;
         }
 
         require_once $file;
+
+        return true;
     }
 
     /**
@@ -171,12 +176,15 @@ class h2o {
      */
     public function render($template = null, array $context = array()) {
         // Handle the old render syntax
-        if (is_array($template) || ($template instanceOf h2o_Context)) {
+        if (is_null($template) || is_array($template) || ($template instanceOf h2o_Context)) {
             if (empty($this->_template) && empty($this->_nodes)) {
                 throw new RuntimeException('Using old h2o::render snytax with new h2o::__construct');
             }
 
-            $context  = $template;
+            if (!is_null($template)) {
+                $context  = $template;
+            }
+
             $template = $this->_template;
         }
 
