@@ -24,11 +24,11 @@ class h2o_Argument {
             } else if ($token == 'boolean') {
                 array_push($b_current, ($data === 'true' ? true : false));
             } else if ($token == 'name') {
-                array_push($b_current, array(symbol($data)));
-            } else if ($token == 'number' || $token == 'string') { 
+                array_push($b_current, symbol($data));
+            } else if ($token == 'number' || $token == 'i8n_string') { 
                 array_push($b_current, $data);
-            } else if ($token == 'named_argument') {
-                $last = $current_buffer[count($b_current) - 1];
+            } else if ($token == 'named_arg') {
+                $last = $b_current[count($b_current) - 1];
                 if (!is_array($last)) {
                     array_push($b_current, array());
                 }
@@ -36,12 +36,13 @@ class h2o_Argument {
                 $namedArgs =& $b_current[count($b_current) - 1]; 
                 list($name,$value) = array_map('trim', explode(':', $data, 2));
 
-                $value = self::parseArguments($value);
+                $value = self::parse($value);
                 $namedArgs[$name] = $value[0];
             } else if ($token == 'operator') {
                 array_push($b_current, array('operator' => $data));
             }
         }
+
         return $result;
     }
 }
@@ -87,16 +88,16 @@ class h2o_ArgumentLexer {
                     "([^"\\\\]*(?:\\\\.[^"\\\\]*)*)" |   # Double Quote string   
                     \'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\' # Single Quote String
             )/xsm';
-            $string      = "/_\({$r($string)}\) | {$r($string)}/xsm";
+            $i8n_string      = "/_\({$r($string)}\) | {$r($string)}/xsm";
     
             $named_arg   = "{
                 ({$r($name)})(?:{$r($whitespace)})?
                 : 
-                (?:{$r($whitespace)})?({$r($string)}|{$r($number)}|{$r($name)})
+                (?:{$r($whitespace)})?({$r($i8n_string)}|{$r($number)}|{$r($name)})
             }x";
 
             $patterns = compact(
-                'whitespace', 'filter_end', 'boolean', 'separator',
+                'whitespace', 'filter_end', 'boolean', 'separator', 'i8n_string',
                 'pipe', 'operator', 'number', 'name', 'named_arg', 'string'
             );
         }
@@ -110,8 +111,8 @@ class h2o_ArgumentLexer {
         $length = strlen($this->_source);
         $regex  = $this->getPatterns();
 
-        $pat_start  = array('operator', 'named_arg', 'name', 'pipe', 'separator', 'string', 'number');
-        $pat_filter = array('pipe', 'separator', 'filter_end', 'boolean', 'named_arg', 'name', 'string', 'number');
+        $pat_start  = array('operator', 'named_arg', 'boolean', 'name', 'pipe', 'separator', 'i8n_string', 'number');
+        $pat_filter = array('pipe', 'separator', 'filter_end', 'boolean', 'named_arg', 'name', 'i8n_string', 'number');
 
         while ($this->_source_pos < $length) {
             $this->_scan($regex['whitespace']);
@@ -133,9 +134,11 @@ class h2o_ArgumentLexer {
                     continue 2;
                 } else if (!$filter && $pat == 'pipe') {
                     $filter = true;
+                    array_push($result, array('filter_start', $this->_match));
+                    continue 2;
                 } else if ($filter && $pat == 'pipe') {
-                    array_push($result, array('filter_end', null));
-                    array_push($result, array('filter_start', null));
+                    array_push($result, array('filter_end', $this->_match));
+                    array_push($result, array('filter_start', $this->_match));
                     continue 2;
                 } else if ($filter && $pat == 'filter_end') {
                     $filter = false;
@@ -165,6 +168,10 @@ class h2o_ArgumentLexer {
         }
 
         return false;
+    }
+
+    private function _wouldScan() {
+        return substr($this->_source, $this->_source_pos);
     }
 
     function getPosition() {

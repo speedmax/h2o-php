@@ -102,7 +102,7 @@ abstract class h2o_Filter {
     }
 }
 
-abstract class Filter_Collection implements IteratorAggregate {
+abstract class FilterCollection implements IteratorAggregate {
     protected $_auto = true;
 
     private $_cache;
