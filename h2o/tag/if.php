@@ -17,6 +17,7 @@
 class h2o_Tag_If extends h2o_Tag {
     private $_body;
     private $_else;
+    private $_negate = false;
 
     public function __construct($arguments, h2o_Parser $parser) {
         if (preg_match('/\s(and|or)\s/', $arguments)) {
@@ -30,9 +31,25 @@ class h2o_Tag_If extends h2o_Tag {
         }
 
         $this->_args = h2o_Argument::parse($arguments);
+
+        $first = current($this->_args);
+        if (isset($first['operator']) && $first['operator'] == 'not') {
+            array_shift($this->_args);
+            $this->_negate = true;
+        }
     }
 
     public function render(h2o_Context $context) {
-        $this->_body->render($context);
+        $result = h2o_Evaluator::exec($this->_args, $context);
+
+        if ($this->_negate) {
+            $result = !$result;
+        }
+
+        if ($result) {
+            return $this->_body->render($context);
+        } else if (isset($this->_else)) {
+            return $this->_else->render($context);
+        }
     }
 }

@@ -39,7 +39,7 @@ class h2o_Tag_For extends h2o_Tag {
         }
 
         $this->_data['item'] = $match['item']; // Mandatory
-        $this->_data['from'] = $match['from']; // Mandatory
+        $this->_data['from'] = symbol($match['from']); // Mandatory
 
         if (!empty($match['key'])) {
             $this->_data['key']  = $match['item'];
@@ -109,6 +109,7 @@ class h2o_Tag_For extends h2o_Tag {
             ); 
 
             $output .= $this->_body->render($context);
+            $idx++;
         }
 
         return $output;
