@@ -25,6 +25,8 @@ class h2o_Context implements ArrayAccess {
         'SAFE_CLASS' => array('stdClass')
     );
 
+    private $_autoescape = true;
+
     /**
      * Available layers for this context. Always has at least one index
      *
@@ -47,6 +49,18 @@ class h2o_Context implements ArrayAccess {
         if (isset($options['SAFE_CLASS'])) {
             $this->_options['SAFE_CLASS'] = array_merge(
                 $this->_options['SAFE_CLASS'], $options['SAFE_CLASS']);
+        }
+
+        if (isset($options['autoescape'])) {
+            $this->_autoescape = (bool)$options['autoescape'];
+        }
+    }
+
+    public function __set($key, $val) {
+        switch ($key) {
+            case 'autoescape':
+                $this->_autoescape = (bool)$val;
+                break;
         }
     }
 
@@ -74,6 +88,30 @@ class h2o_Context implements ArrayAccess {
         }
 
         return array_shift($this->_scopes);
+    }
+
+    /**
+     * Resolve a string to its real value
+     *
+     * @todo add a lookup table for extensibility
+     */
+    public function resolve($key) {
+        if ($key[0] == ':') {
+            return $this->lookup(sym_to_str($key));
+        }
+
+        if ($key == 'true') {
+            return true;
+        } else if ($key == 'false') {
+            return false;
+        } else if (preg_match('/^-?\d+(\.\d+)?$/', $key, $matches)) {
+            return isset($matches[1]) ? floatval($key) : intval($key);
+        } else if (preg_match('/^"([^"\\\\]*(?:\\.[^"\\\\]*)*)"|'.
+                            '\'([^\'\\\\]*(?:\\.[^\'\\\\]*)*)\'$/', $key)) {
+            return stripcslashes(substr($key, 1, -1));
+        }
+
+        return null;
     }
 
     /**
@@ -130,11 +168,14 @@ class h2o_Context implements ArrayAccess {
                     $object = $object->$key;
                 } else if (is_callable(array($object, $key))) {
                     $class = get_class($object);
+                    $safe = isset($object->h2o_safe) ? $object->h2o_safe : array();
 
                     if (in_array($class, $this->_options['SAFE_CLASS'])) {
                         $object = $object->$key();
                     } else if (isset($this->_options['SAFE_CLASS'][$class])
                         && (in_array($key, $this->_options['SAFE_CLASS'][$class]))) {
+                        $object = $object->$key();
+                    } else if (in_array($key, $safe)) {
                         $object = $object->$key();
                     } else {
                         return null;
@@ -213,5 +254,9 @@ class h2o_Context implements ArrayAccess {
                 unset($layer[$key]);
             }
         }
+    }
+
+    public function shouldEscape() {
+        return $this->_autoescape;
     }
 }

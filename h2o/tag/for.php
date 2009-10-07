@@ -56,7 +56,7 @@ class h2o_Tag_For extends h2o_Tag {
     }
 
     public function render(h2o_Context $context) {
-        $from = $context->lookup($this->_data['from']);
+        $from = $context->resolve($this->_data['from']);
         $keys = $this->_data;
 
         if (is_null($from) || count($from) == 0) {

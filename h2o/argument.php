@@ -43,9 +43,6 @@ class h2o_Argument {
             }
         }
         return $result;
-
-        print_r($tokens);
-        exit;
     }
 }
 

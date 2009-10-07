@@ -11,7 +11,10 @@
 
 defined('H2O_PATH') or define('H2O_PATH', dirname(__FILE__).'/');
 
+require_once H2O_PATH.'/ext/filters.php';
 require_once H2O_PATH.'/h2o/stacks.php';
+
+spl_autoload_register(array('h2o', 'autoload'));
 
 /**
  * H2O is markup language for PHP that taken a lot of inspiration from Django.
@@ -29,6 +32,7 @@ class h2o {
      * Available settings are:
      *
      *  - searchpath  Directory h2o should look for templates in [CWD/templates]
+     *  - autoescape  If set, output will be escaped automatically [true]
      *
      * Available parser options are:
      *
@@ -70,6 +74,7 @@ class h2o {
 
         $this->_options = $options += array(
             'searchpath'     => dirname(__FILE__).'/templates/',
+            'autoescape'     => true,
 
             'TRIM_TAGS'      => true,
             'TAG_START'      => '{%',
@@ -83,8 +88,6 @@ class h2o {
         if (substr($this->_options['searchpath'], -1) != '/') {
             $this->_options['searchpath'] .= '/';
         }
-
-        spl_autoload_register(array(__CLASS__, 'autoload'));
     }
 
     /**
@@ -168,7 +171,7 @@ class h2o {
      */
     public function render($template = null, array $context = array()) {
         // Handle the old render syntax
-        if (is_array($template)) {
+        if (is_array($template) || ($template instanceOf h2o_Context)) {
             if (empty($this->_template) && empty($this->_nodes)) {
                 throw new RuntimeException('Using old h2o::render snytax with new h2o::__construct');
             }
@@ -181,7 +184,9 @@ class h2o {
             $this->_nodes = $this->parseFile($template);
         }
 
-        $context = new h2o_Context($context);
+        if (is_array($context)) {
+            $context = new h2o_Context($context, $this->_options);
+        }
 
         return $this->_nodes->render($context);
     }
@@ -202,4 +207,16 @@ function h2o($name, array $options = array()) {
         $instance->parseString($name);
         return $instance;
     }
+}
+
+function sym_to_str($string) {
+    return substr($string, 1);
+}
+
+function is_sym($string) {
+    return isset($string[0]) && $string[0] === ':';
+}
+
+function symbol($string) {
+    return ':'.$string;
 }

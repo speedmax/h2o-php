@@ -202,15 +202,3 @@ class h2o_Parser {
         return $result;
     }
 }
-
-function sym_to_str($string) {
-    return substr($string, 1);
-}
-
-function is_sym($string) {
-    return isset($string[0]) && $string[0] === ':';
-}
-
-function symbol($string) {
-    return ':'.$string;
-}

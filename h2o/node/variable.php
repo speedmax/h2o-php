@@ -41,13 +41,13 @@ class h2o_Node_Variable extends h2o_Node {
      */
     public function __construct($contents) {
         if (!strpos($contents, '|')) {
-            $this->_variable = trim($contents);
+            $this->_variable = symbol(trim($contents));
             return;
         }
 
         list($key, $filters) = explode('|', $contents, 2);
 
-        $this->_variable = trim($key);
+        $this->_variable = symbol(trim($key));
 
         // Parse the filter string
         foreach (explode('|', $filters) as $filter) {
@@ -72,10 +72,19 @@ class h2o_Node_Variable extends h2o_Node {
      * @todo Filter handling
      */
     public function render(h2o_Context $context) {
-        $content = $context->lookup($this->_variable);
+        $content = $context->resolve($this->_variable);
+        $escaped = false; // We only want to escape output once
 
         foreach ($this->_filters as $filter) {
+            if ($filter['filter'] == 'escape' || $filter['filter'] == 'safe') {
+                $escaped = true;
+            }
+
             $content = h2o_Filter::run($filter['filter'], $content, $filter['arguments']);
+        }
+
+        if (!$escaped && $context->shouldEscape()) {
+            $content = h2o_Filter::run('escape', $content);
         }
 
         return $content;
