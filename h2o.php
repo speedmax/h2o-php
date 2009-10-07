@@ -28,7 +28,7 @@ class h2o {
      *
      * Available settings are:
      *
-     *  - PATH  Directory h2o should look for templates in [CWD/templates]
+     *  - searchpath  Directory h2o should look for templates in [CWD/templates]
      *
      * Available parser options are:
      *
@@ -46,16 +46,31 @@ class h2o {
      */
     private $_options;
 
+    private $_template;
+
+    private $_nodes;
+
     /**
      * Initialize the options array, providing any necessary defaults
+     *
+     * For backwards compatibility you may pass both a template name and the
+     * options array to the constructor. New behaviour is to pass only the
+     * options and specify the template at {@link render()} time.
      *
      * @access public
      * @param array $options Custom options and settings for this instance [array()]
      * @see $_options
      */
-    public function __construct(array $options = array()) {
+    public function __construct($options = array(), array $optional = array()) {
+        // Handle the old constructor
+        if (is_string($options)) {
+            $this->_template = $options;
+            $options = $optional;
+        }
+
         $this->_options = $options += array(
-            'PATH'           => dirname(__FILE__).'/templates/',
+            'searchpath'     => dirname(__FILE__).'/templates/',
+
             'TRIM_TAGS'      => true,
             'TAG_START'      => '{%',
             'TAG_END'        => '%}',
@@ -65,8 +80,8 @@ class h2o {
             'COMMENT_END'    => '*}'
         );
 
-        if (substr($this->_options['PATH'], -1) != '/') {
-            $this->_options['PATH'] .= '/';
+        if (substr($this->_options['searchpath'], -1) != '/') {
+            $this->_options['searchpath'] .= '/';
         }
 
         spl_autoload_register(array(__CLASS__, 'autoload'));
@@ -104,7 +119,7 @@ class h2o {
      * @return string
      */
     public function load($template) {
-        $file = $this->_options['PATH'].$template;
+        $file = $this->_options['searchpath'].$template;
 
         if (!is_file($file)) {
             throw new Exception(sprintf('Template `%s` was not found', $template));
@@ -134,8 +149,16 @@ class h2o {
         return $this->parse($source);
     }
 
+    public function parseString($template) {
+        return ($this->_nodes = $this->parse($template));
+    }
+
     /**
      * Attempt to load, parse and return a rendered template
+     *
+     * To preserve backwards compatibility, the first parameter may be either
+     * an array or a string. If an array is passed, {@link $_template}
+     * is used as the template.
      *
      * @access public
      * @param string $template Name of the template to render
@@ -143,10 +166,40 @@ class h2o {
      * @see h2o_Context
      * @return string
      */
-    public function render($template, array $context = array()) {
-        $nodes   = $this->parseFile($template);
+    public function render($template = null, array $context = array()) {
+        // Handle the old render syntax
+        if (is_array($template)) {
+            if (empty($this->_template) && empty($this->_nodes)) {
+                throw new RuntimeException('Using old h2o::render snytax with new h2o::__construct');
+            }
+
+            $context  = $template;
+            $template = $this->_template;
+        }
+
+        if (empty($this->_nodes)) {
+            $this->_nodes = $this->parseFile($template);
+        }
+
         $context = new h2o_Context($context);
 
-        return $nodes->render($context);
+        return $this->_nodes->render($context);
+    }
+}
+
+/**
+ * Convenience wrapper for loading templates or parsing a string
+ *
+ * @param string $name Name of the template to load or a raw template string
+ * @param array $options Options to pass to the h2o instance
+ * @return h2o
+ */
+function h2o($name, array $options = array()) {
+    if (preg_match('/([^\s]*?)(\.[^.\s]*$)/', $name)) {
+        return new h2o($name, $options);
+    } else {
+        $instance = new h2o($options);
+        $instance->parseString($name);
+        return $instance;
     }
 }
