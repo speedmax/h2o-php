@@ -1,0 +1,6 @@
+{% extends 'emails/base.html' %}
+
+
+{% block heading %}
+    Hello {{ customer | default 'Customer' }}
+{% endblock %}

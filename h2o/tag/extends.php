@@ -28,7 +28,7 @@ class h2o_Tag_Extends extends h2o_Tag {
 
         $parser->parse(); // Finish parsing the current template
 
-        $this->_nodes = $parser->Runtime->parseFile($matches['file']);
+        $this->_nodes = $parser->Runtime->parseToNodes($matches['file']);
 
         if (!isset($this->_nodes->Parser->storage['blocks']) || !isset($parser->storage['blocks'])) {
             return;

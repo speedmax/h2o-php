@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<title>something {{ page.title | titlize }}</title>
+</head>
+<body>
+
+
+
+<h3>try this loop thingy - bitches on the run  </h3>
+
+<h3>Normal:</h3>
+<ul>
+  {{ links.first }}
+{% for item in links %}
+  <li>{{ item }} </li> 
+{% endfor %}
+</ul>
+
+<h3>Reverse:</h3>
+<ul>
+{% for item in links reverse %}
+  <li {% if loop.even %}style="background:green"{% endif %}>
+    {{ loop.last }} {{ loop.counter }} - {{ item }}
+  
+    {% for shit in links %}
+       {{ loop.counter }}
+    {% endfor %}
+  </li>
+{% endfor %}
+</ul>
+
+<h3>Empty:</h3>
+{% for ass in asses %}
+  {{ ass }}
+{% endfor %}
+
+<h3>Nested: TODO</h3>
+<h3>Conditions</h3>
+
+{% if page.title %}
+  this is a page title
+{% else %}
+  test - else block
+{% endif %}
+
+{% block body %}
+  <h1>{{ page.title }}</h1>
+  <small> {{ page.description }} </small>
+  <p>{{ page.body }}</p>
+  
+  parent content
+{% endblock %}
+</body>
+</html>

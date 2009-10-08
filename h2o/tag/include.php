@@ -22,7 +22,7 @@ class h2o_Tag_Include extends h2o_Tag {
             throw new RuntimeException('Filename must be encompassed in quotes: "'.$arguments.'"');
         }
 
-        $this->_nodes = $parser->Runtime->parseFile($matches['file']);
+        $this->_nodes = $parser->Runtime->parseToNodes($matches['file']);
 
         $parser->storage['templates'] = array_merge(
             $this->_nodes->Parser->storage['templates'], $parser->storage['templates']

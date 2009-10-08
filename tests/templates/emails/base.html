@@ -1,0 +1,12 @@
+{% block heading %}
+    Dear {{ customer | default 'Customer' }}
+{% endblock %}
+
+{% block content %}
+    I would like to let you that we have the greatest offer.
+{% endblock %}
+
+{% block footer %}
+    Not interested anymore? Unsubscribe. Having trouble viewing this email? 
+    View it in your browser
+{% endblock %}
