@@ -1,264 +1,230 @@
 <?php
-define('H2O_VERSION', '0.3');
-defined('DS') or define('DS', DIRECTORY_SEPARATOR);
-defined('H2O_ROOT') or define('H2O_ROOT', dirname(__FILE__) . DS);
+/**
+ * H2O Template
+ *
+ * @author James Logsdon <dwarf@girsbrain.org>
+ * @author Taylor Luk <taylor.luk@idealian.net>
+ * @package h2o-php
+ * @copyright Copyright (c) 2008 Taylor Luk
+ * @license http://opensource.org/licenses/mit-license.php MIT License
+ */
 
-require H2O_ROOT.'h2o/datatype.php';
-require H2O_ROOT.'h2o/loaders.php';
-require H2O_ROOT.'h2o/nodes.php';
-require H2O_ROOT.'h2o/tags.php';
-require H2O_ROOT.'h2o/errors.php';
-require H2O_ROOT.'h2o/filters.php';
-require H2O_ROOT.'h2o/context.php';
+defined('H2O_PATH') or define('H2O_PATH', dirname(__FILE__).'/');
+
+require_once H2O_PATH.'/h2o/stacks.php';
+
+spl_autoload_register(array('h2o', 'autoload'));
+
+// Setup base tags and filters
+require_once H2O_PATH.'/ext/filters.php';
+h2o_Tag::add(array('if', 'for', 'extends', 'include', 'with', 'block'));
 
 /**
- * Example:
- *  $h2o = new H2O('./template.html', array("loader"=>'file'));
- *  
- *  
- *  $h2o = new H2O('template.html', array("loader"=>'hash'));
+ * H2O is markup language for PHP that taken a lot of inspiration from Django.
+ *
+ *  - Readable and human friendly syntax.
+ *  - Easy to use and maintain
+ *  - Encourage reuse in templates by template inclusion and inheritance.
+ *  - highly extensible through filters, tags and template extensions.
+ *  - Bundled rich set of filters and tags for string formatting, HTML helpers and internationalization. 
  */
-class H2o {
-    var $searchpath;
-    var $context;
-    var $loader = false;
-    
-    static $tags = array();
-    static $filters = array();
-    static $extensions = array();
-    
-    function getOptions($options = array()) {
-        return array_merge(array(
-            'loader'            =>       'file',
-            'cache'             =>      'file',     // file | apc | memcache
-            'cache_prefix'      =>      'h2o_',
-            'cache_ttl'         =>      3600,     // file | apc | memcache
-            'searchpath'        =>      false,
-            'autoescape'        =>      true,
-        
-            // Enviroment setting
-            'BLOCK_START'       =>      '{%',
-            'BLOCK_END'         =>      '%}',
-            'VARIABLE_START'    =>      '{{',
-            'VARIABLE_END'      =>      '}}',
-            'COMMENT_START'     =>      '{*',
-            'COMMENT_END'       =>      '*}',
-            'TRIM_TAGS'         =>      true
-        ), $options);
-    }
-    
-    function __construct($file = null, $options = array()) {
-        # Init a environment
-        $this->options = $this->getOptions($options);        
-        $loader = $this->options['loader'];
+class h2o {
+    /**
+     * Options and settings for this h2o instance
+     *
+     * Available settings are:
+     *
+     *  - searchpath  Directory h2o should look for templates in [CWD/templates]
+     *  - autoescape  If set, output will be escaped automatically [true]
+     *
+     * Available parser options are:
+     *
+     *  - TRIM_TAGS       If true, all whitespace will be trimmed off the end of
+     *                    a tag [false]
+     *  - TAG_START       Token to mark the start of a tag. [{%]
+     *  - TAG_END         Token to mark the end of a tag [%}]
+     *  - VARIABLE_START  Token to mark the start of a variable [{{]
+     *  - VARIABLE_END    Token to mark the end of a variable [}}]
+     *  - COMMENT_START   Token to mark the start of a comment [{*]
+     *  - COMMENT_END     Token to mark the end of a comment [*}]
+     *
+     * @var array
+     * @access private
+     */
+    private $_options;
 
-        if (!$loader)
-            return true;
+    private $_template;
 
-        if (is_object($loader)) {
-            $this->loader = $loader;
-            $this->loader->setOptions($this->options);
-        } else {
-            $loader = "H2o_{$loader}_Loader";
-            if (!class_exists($loader))
-                throw new Exception('Invalid template loader');
-                
-            if (isset($options['searchpath']))
-                $this->searchpath = realpath($options['searchpath']).DS;
-            elseif ($file)
-                $this->searchpath = dirname(realpath($file)).DS;
-            else
-                $this->searchpath = getcwd().DS;
+    private $_nodes;
 
-            $this->loader = new $loader($this->searchpath, $this->options);        
-        }
-        $this->loader->runtime = $this;
-        
-        if (isset($options['i18n'])) {
-            h2o::load('i18n');
-            $this->i18n = new H2o_I18n($this->searchpath, $options['i18n']);
-        }
-    
-        if ($file) {
-            $this->nodelist = $this->loadTemplate($file);
-        }
-    }
-
-    function loadTemplate($file) {
-        return $this->nodelist = $this->loader->read_cache($file);
-    }
-    
-    function loadSubTemplate($file) {
-        return $this->loader->read($file);
-    }
-    
-    # Build a finalized nodelist from template ready to be cached
-    function parse($source, $filename = '', $env = null) {
-        if (!$env)
-            $env = $this->options;
-
-        if (!class_exists('H2o_Parser'))
-            require H2O_ROOT.'h2o/parser.php';
-
-        $parser = new H2o_Parser($source, $filename, $this, $env);
-        $nodelist = $parser->parse();
-        return $nodelist;
-    }
-
-    function set($context, $value = null) {
-        # replace with new context object
-        if (is_object($context) && $context instanceof H2o_Context) {
-            return $this->context = $context;
+    /**
+     * Initialize the options array, providing any necessary defaults
+     *
+     * For backwards compatibility you may pass both a template name and the
+     * options array to the constructor. New behaviour is to pass only the
+     * options and specify the template at {@link render()} time.
+     *
+     * @access public
+     * @param array $options Custom options and settings for this instance [array()]
+     * @see $_options
+     */
+    public function __construct($options = array(), array $optional = array()) {
+        // Handle the old constructor
+        if (is_string($options)) {
+            $this->_template = $options;
+            $options = $optional;
         }
 
-        # Init context
-        if (!$this->context) {
-            $this->context = new H2o_Context($this->defaultContext(), $this->options);
-        }
-        
-        # Extend or set value
-        if (is_array($context)) {
-            return $this->context->extend($context);
-        } 
-        elseif (is_string($context)) {
-            return $this->context[$context] = $value;
-        }
-        return false;
-    }
-    
-    # Render the nodelist
-    function render($context = array()) {
-        $this->set($context);
+        $this->_options = $options += array(
+            'searchpath'     => dirname(__FILE__).'/templates/',
+            'autoescape'     => true,
 
-        $this->stream = new StreamWriter;
-        $this->nodelist->render($this->context, $this->stream);
-        return $this->stream->close();
-    }
+            'TRIM_TAGS'      => true,
+            'TAG_START'      => '{%',
+            'TAG_END'        => '%}',
+            'VARIABLE_START' => '{{',
+            'VARIABLE_END'   => '}}',
+            'COMMENT_START'  => '{*',
+            'COMMENT_END'    => '*}'
+        );
 
-    static function parseString($source, $options = array()) {
-        $instance = new H2o(null, array_merge($options, array('loader' => false)));
-        $instance->nodelist = $instance->parse($source);
-        return $instance;
-    }
-
-    static function &createTag($tag, $args = null, $parser, $position = 0) {
-        if (!isset(self::$tags[$tag])) {
-            throw new H2o_Error($tag . " tag doesn't exist");
+        if (substr($this->_options['searchpath'], -1) != '/') {
+            $this->_options['searchpath'] .= '/';
         }
-        $tagClass = self::$tags[$tag];
-        $tag = new $tagClass($args, $parser, $position);
-        return $tag;
     }
 
     /**
-     * Register a new tag
+     * Attempt to load class files
      *
-     * 
-     * h2o::addTag('tag_name', 'ClassName');
-     * 
-     * h2o::addTag(array(
-     *      'tag_name' => 'MagClass',
-     *      'tag_name2' => 'TagClass2'
-     * ));
+     * h2o_Node_Variable becomes H2O_PATH/h2o/node/variable.php
      *
-     *  h2o::addTag('tag_name');      // Tag_name_Tag
-     * 
-     * h2o::addTag(array('tag_name', 
-     * @param unknown_type $tag
-     * @param unknown_type $class
+     * @access public
+     * @static
+     * @param mixed $className
+     * @return void
      */
-    static function addTag($tag, $class = null) {
-        $tags = array();
-        if (is_string($tag)) {
-            if (is_null($class)) 
-                $class = ucwords("{$tag}_Tag");
-            $tags[$tag] = $class;
-        } elseif (is_array($tag)) {
-            $tags = $tag;
+    static public function autoload($className) {
+        if (substr($className, 0, 4) != 'h2o_') {
+            return;
         }
-        
-        foreach ($tags as $tag => $tagClass) {
-            if (is_integer($tag)) {        
-                unset($tags[$tag]);
-                $tag = $tagClass;
-                $tagClass = ucwords("{$tagClass}_Tag");
-            }
-            if (!class_exists($tagClass)) {
-                throw new H2o_Error("{$tagClass} tag is not found");
-            }
-            $tags[$tag] = $tagClass;
-        }
-        self::$tags = array_merge(self::$tags, $tags);
-    }
 
-    /**
-     * Register a new filter to h2o runtime
-     *
-     * @param unknown_type $filter
-     * @param unknown_type $callback
-     * @return unknown
-     */
-    static function addFilter($filter, $callback = null) {
-        if (is_array($filter)) {
-            $filters = $filter;
-            foreach($filters as $key => $filter) {
-                if (is_numeric($key))
-                    $key = $filter;
-                self::addFilter($key, $filter);
-            }
-            return true;
-        } elseif (is_string($filter) && class_exists($filter) && is_subclass_of($filter, 'FilterCollection')) {
-            foreach (get_class_methods($filter) as $f) {
-                if (is_callable(array($filter, $f)))
-                    self::$filters[$f] = array($filter, $f);
-            }
-            return true;
-        }
-        if (is_null($callback))
-            $callback = $filter;
-            
-        if (!is_callable($callback)) {
+        $file = H2O_PATH.'/'.strtolower(str_replace('_', '/', $className)).'.php';
+
+        if (!is_file($file)) {
             return false;
         }
-        self::$filters[$filter] = $callback;
-    }
-    
-    static function addLookup($callback) {
-        if (is_callable($callback)) {
-            H2o_Context::$lookupTable[] = $callback;
-        } else die('damm it');
-    }
-    
-    static function load($extension, $file = null) {
-        if (!$file) {
-            $file = H2O_ROOT.'ext'.DS.$extension.'.php';
-        }
-        if (is_file($file)) {
-            include_once ($file);
-            self::$extensions[$extension] = $file;
-        }
+
+        require_once $file;
+
+        return true;
     }
 
-    function defaultContext() {
-        return array('h2o' => new H2o_Info);
+    /**
+     * Attempt to load a template source
+     *
+     * @access public
+     * @param string $template
+     * @return string
+     */
+    public function load($template) {
+        $file = $this->_options['searchpath'].$template;
+
+        if (!is_file($file)) {
+            throw new Exception(sprintf('Template `%s` was not found', $template));
+        }
+
+        return file_get_contents($file);
+    }
+
+    /**
+     * Parse a template and return a node stack
+     *
+     * @access public
+     * @param string $source
+     * @param mixed $options Custom parser settings for this run [null]
+     * @see $_options
+     * @return h2o_NodeStack
+     */
+    public function parse($source, array $options = null) {
+        $parser = new h2o_Parser($this, $source, is_null($options) ? $this->_options : $options);
+
+        return $parser->parse();
+    }
+
+    public function parseFile($template) {
+        $source = $this->load($template);
+
+        return $this->parse($source);
+    }
+
+    public function parseString($template) {
+        return ($this->_nodes = $this->parse($template));
+    }
+
+    /**
+     * Attempt to load, parse and return a rendered template
+     *
+     * To preserve backwards compatibility, the first parameter may be either
+     * an array or a string. If an array is passed, {@link $_template}
+     * is used as the template.
+     *
+     * @access public
+     * @param string $template Name of the template to render
+     * @param array $context An array of key-value pairs to pass to the template [array()]
+     * @see h2o_Context
+     * @return string
+     */
+    public function render($template = null, array $context = array()) {
+        // Handle the old render syntax
+        if (is_null($template) || is_array($template) || ($template instanceOf h2o_Context)) {
+            if (empty($this->_template) && empty($this->_nodes)) {
+                throw new RuntimeException('Using old h2o::render snytax with new h2o::__construct');
+            }
+
+            if (!is_null($template)) {
+                $context  = $template;
+            }
+
+            $template = $this->_template;
+        }
+
+        if (empty($this->_nodes)) {
+            $this->_nodes = $this->parseFile($template);
+        }
+
+        if (is_array($context)) {
+            $context = new h2o_Context($context, $this->_options);
+        }
+
+        return $this->_nodes->render($context);
     }
 }
 
 /**
- * Convenient wrapper for loading template file or string
- * @param $name
- * @param $options - H2o options
- * @return Instance of H2o Template
+ * Convenience wrapper for loading templates or parsing a string
+ *
+ * @param string $name Name of the template to load or a raw template string
+ * @param array $options Options to pass to the h2o instance
+ * @return h2o
  */
-function h2o($name, $options = array()) {
-    $is_file = '/([^\s]*?)(\.[^.\s]*$)/';
-    
-    if (!preg_match($is_file, $name)) {
-        return H2o::parseString($name, $options); 
+function h2o($name, array $options = array()) {
+    if (preg_match('/([^\s]*?)(\.[^.\s]*$)/', $name)) {
+        return new h2o($name, $options);
+    } else {
+        $instance = new h2o($options);
+        $instance->parseString($name);
+        return $instance;
     }
-
-    $instance = new H2o($name, $options);
-    return $instance;
 }
 
-?>
+function sym_to_str($string) {
+    return substr($string, 1);
+}
+
+function is_sym($string) {
+    return isset($string[0]) && $string[0] === ':';
+}
+
+function symbol($string) {
+    return ':'.$string;
+}
