@@ -34,6 +34,15 @@ class h2o_Tag_Block extends h2o_Tag {
         $parser->storage['blocks'][$name] = $this;
     }
 
+    public function __get($key) {
+        switch ($key) {
+            case 'Name':
+                return $this->_name;
+        }
+
+        return null;
+    }
+
     public function addLayer(&$nodes) {
         $nodes->parent = $this;
 
@@ -41,13 +50,13 @@ class h2o_Tag_Block extends h2o_Tag {
     }
 
     public function render(h2o_Context $context, $index = 1) {
-        $index  = count($this->_stack) - $index;
+        $key    = count($this->_stack) - $index;
         $output = '';
 
-        if (isset($this->_stack[$index])) {
+        if (isset($this->_stack[$key])) {
             $context->push();
             $context['block'] = new h2o_Context_Block($this, $context, $index);
-            $output .= $this->_stack[$index]->render($context, $index);
+            $output .= $this->_stack[$key]->render($context);
             $context->pop();
         }
 
@@ -75,6 +84,6 @@ class h2o_Context_Block {
     }
 
     function super() {
-        return $this->_block->parent->render($this->_context);
+        return $this->_block->parent->render($this->_context, $this->_index + 1);
     }
 }

@@ -2,11 +2,16 @@
 
 require_once H2O_PATH.'/h2o/filter.php';
 
+function h2o_default($val, $def) {
+    $def = substr($def, 1, -1);
+    return empty($val) ? $def : $val;
+}
+
 // Safe PHP functions
 h2o_Filter::add(array(
     'md5', 'sha1', 'join', 'wordwrap', 'trim',
     'upper' => 'strtoupper', 'lower' => 'strtolower',
-    'escape' => 'htmlspecialchars'
+    'escape' => 'htmlspecialchars', 'default' => 'h2o_default'
 ));
 
 class CoreFilters extends FilterCollection {

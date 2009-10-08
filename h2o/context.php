@@ -22,7 +22,7 @@ class h2o_Context implements ArrayAccess {
      * @access private
      */
     private $_options = array(
-        'SAFE_CLASS' => array('stdClass')
+        'SAFE_CLASS' => array('stdClass', 'h2o_Context_Block')
     );
 
     private $_autoescape = true;

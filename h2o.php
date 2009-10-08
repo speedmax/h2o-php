@@ -70,14 +70,18 @@ class h2o {
      */
     public function __construct($options = array(), array $optional = array()) {
         // Handle the old constructor
-        if (is_string($options)) {
-            $this->_template = $options;
+        if (!is_array($options)) {
+            if (is_string($options)) {
+                $this->_template = $options;
+            }
+
             $options = $optional;
         }
 
         $this->_options = $options += array(
-            'searchpath'     => dirname(__FILE__).'/templates/',
+            'searchpath'     => getcwd(),
             'autoescape'     => true,
+            'loader'         => 'file',
 
             'TRIM_TAGS'      => true,
             'TAG_START'      => '{%',
@@ -88,9 +92,24 @@ class h2o {
             'COMMENT_END'    => '*}'
         );
 
+        if ($this->_options['searchpath'][0] != '/') {
+            $this->_options['searchpath'] = realpath($this->_options['searchpath']);
+        }
+
         if (substr($this->_options['searchpath'], -1) != '/') {
             $this->_options['searchpath'] .= '/';
         }
+
+        $this->setLoader($this->_options['loader']);
+    }
+
+    public function __get($key) {
+        switch ($key) {
+            case 'Loader':
+                return $this->_loader;
+        }
+
+        return null;
     }
 
     /**
@@ -119,21 +138,19 @@ class h2o {
         return true;
     }
 
-    /**
-     * Attempt to load a template source
-     *
-     * @access public
-     * @param string $template
-     * @return string
-     */
-    public function load($template) {
-        $file = $this->_options['searchpath'].$template;
-
-        if (!is_file($file)) {
-            throw new Exception(sprintf('Template `%s` was not found', $template));
+    public function setLoader($loader) {
+        if ($loader instanceOf h2o_Loader) {
+            $this->_loader = $loader;
+            return true;
         }
 
-        return file_get_contents($file);
+        $loaderClass = 'h2o_Loader_'.$loader;
+
+        if (!self::autoload($loaderClass)) {
+            throw new RuntimeException(sprintf('Loader `%s` not found', $loader));
+        }
+
+        $this->_loader = new $loaderClass($this->_options);
     }
 
     /**
@@ -151,14 +168,18 @@ class h2o {
         return $parser->parse();
     }
 
-    public function parseFile($template) {
-        $source = $this->load($template);
+    public function parseToNodes($template) {
+        $source = $this->_loader->load($template);
 
         return $this->parse($source);
     }
 
     public function parseString($template) {
         return ($this->_nodes = $this->parse($template));
+    }
+
+    public function loadTemplate($template) {
+        $this->_nodes = $this->parseToNodes($template);
     }
 
     /**
@@ -176,7 +197,7 @@ class h2o {
      */
     public function render($template = null, array $context = array()) {
         // Handle the old render syntax
-        if (is_null($template) || is_array($template) || ($template instanceOf h2o_Context)) {
+        if ((is_null($template) && is_array($context)) || is_array($template) || ($template instanceOf h2o_Context)) {
             if (empty($this->_template) && empty($this->_nodes)) {
                 throw new RuntimeException('Using old h2o::render snytax with new h2o::__construct');
             }
@@ -189,7 +210,7 @@ class h2o {
         }
 
         if (empty($this->_nodes)) {
-            $this->_nodes = $this->parseFile($template);
+            $this->_nodes = $this->parseToNodes($template);
         }
 
         if (is_array($context)) {
