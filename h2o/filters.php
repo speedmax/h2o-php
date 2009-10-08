@@ -252,8 +252,10 @@ class DatetimeFilters extends FilterCollection {
     static function date($time, $format = 'jS F Y H:i') {
         if ($time instanceof DateTime) 
             $time  = (int) $time->format('U');
-
-        return date($format, strtotime($time));
+        if (!is_numeric($time)) 
+          $time = strtotime($time);
+          
+        return date($format, $time);
     }
 
     static function relative_time($timestamp, $format = 'g:iA') {
