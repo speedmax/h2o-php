@@ -1,11 +1,12 @@
 H2O Template
 ===
-Being a martial art fan, I burrow a quote.
+**This repository is part of the refactoring push, only use it if you know what you're doing**
 
+Being a martial art fan, I borrow a quote.
 
-See the [original project page][1] for more information.
-
- [1]:http://github.com/speedmax/h2o-php
+>Empty your mind, be formless. Shapeless, like water. If you put water into a cup, it becomes the cup. You put water
+>into a bottle and it becomes the bottle. You put it in a teapot it becomes the teapot. Now, water can flow or it can
+>crash. **Be water my friend**. -- Bruce Lee
 
 H2o template
 ------------------------
