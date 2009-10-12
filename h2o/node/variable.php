@@ -40,26 +40,14 @@ class h2o_Node_Variable extends h2o_Node {
      * @todo Filter parsing
      */
     public function __construct($contents) {
-        if (!strpos($contents, '|')) {
-            $this->_variable = symbol(trim($contents));
-            return;
-        }
+        $parsed = h2o_Argument::parse($contents);
 
-        list($key, $filters) = explode('|', $contents, 2);
+        $this->_variable = array_shift($parsed);
 
-        $this->_variable = symbol(trim($key));
+        foreach ($parsed as $arguments) {
+            $name = substr(array_shift($arguments), 1);
 
-        // Parse the filter string
-        foreach (explode('|', $filters) as $filter) {
-            @list($filter, $arguments) = preg_split('/\s+/', trim($filter), 2);
-
-            if (!empty($arguments)) {
-                $arguments = preg_split('/\s+/', $arguments);
-            } else {
-                $arguments = array();
-            }
-
-            array_push($this->_filters, compact('filter', 'arguments'));
+            array_push($this->_filters, compact('name', 'arguments'));
         }
     }
 
@@ -76,11 +64,11 @@ class h2o_Node_Variable extends h2o_Node {
         $escaped = false; // We only want to escape output once
 
         foreach ($this->_filters as $filter) {
-            if ($filter['filter'] == 'escape' || $filter['filter'] == 'safe') {
+            if ($filter['name'] == 'escape' || $filter['name'] == 'safe') {
                 $escaped = true;
             }
 
-            $content = h2o_Filter::run($filter['filter'], $content, $filter['arguments']);
+            $content = h2o_Filter::run($filter['name'], $content, $filter['arguments']);
         }
 
         if (!$escaped && $context->shouldEscape()) {
