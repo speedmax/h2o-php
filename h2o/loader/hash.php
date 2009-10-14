@@ -30,4 +30,8 @@ class h2o_Loader_Hash extends h2o_Loader {
 
         return $this->_templates[$template];
     }
+
+    public function mtime($template) {
+        return time();
+    }
 }

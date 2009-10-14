@@ -3,3 +3,4 @@
 .svn
 .*.swp
 *.kpf
+tests/cache

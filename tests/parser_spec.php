@@ -6,7 +6,7 @@ class Describe_Parser_Patterns extends SimpleSpec {
 
     function __construct() {
         parent::__construct();
-        require H2O_PATH.'/h2o/argument.php';
+        require_once H2O_PATH.'/h2o/argument.php';
 
         $parser = new h2o_ArgumentLexer('');
         $this->_regex = $parser->getPatterns();

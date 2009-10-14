@@ -14,6 +14,7 @@
  */
 abstract class h2o_Loader {
     abstract public function load($template);
+    abstract public function mtime($template);
 
     public function __get($key) {
         switch ($key) {

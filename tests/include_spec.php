@@ -11,6 +11,7 @@ class Describe_include_tag extends SimpleSpec {
     }
 
     function should_include_SubTemplate() {
+        define('D', true);
         $h2o = new h2o('_header.html', $this->_options);
         $result = $h2o->render();
         expects($result)->should_match('/page menu/');

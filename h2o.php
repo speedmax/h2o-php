@@ -57,6 +57,10 @@ class h2o {
 
     private $_nodes;
 
+    static private $cache;
+
+    private $_loader;
+
     /**
      * Initialize the options array, providing any necessary defaults
      *
@@ -73,6 +77,10 @@ class h2o {
         if (!is_array($options)) {
             if (is_string($options)) {
                 $this->_template = $options;
+
+                if (!isset($optional['searchpath']) && is_file($options)) {
+                    $optional['searchpath'] = dirname(realpath($options));
+                }
             }
 
             $options = $optional;
@@ -82,6 +90,7 @@ class h2o {
             'searchpath'     => getcwd(),
             'autoescape'     => true,
             'loader'         => 'file',
+            'cache'          => 'file',
 
             'TRIM_TAGS'      => true,
             'TAG_START'      => '{%',
@@ -101,12 +110,15 @@ class h2o {
         }
 
         $this->setLoader($this->_options['loader']);
+        $this->setCache($this->_options['cache']);
     }
 
     public function __get($key) {
         switch ($key) {
             case 'Loader':
                 return $this->_loader;
+            case '_cache':
+                return self::$cache;
         }
 
         return null;
@@ -133,6 +145,10 @@ class h2o {
             return false;
         }
 
+        if (isset(self::$cache)) {
+            self::$cache->set('classes[]', $className);
+        }
+
         require_once $file;
 
         return true;
@@ -153,6 +169,25 @@ class h2o {
         $this->_loader = new $loaderClass($this->_options);
     }
 
+    public function setCache($cache) {
+        if ($cache instanceOf h2o_Cache) {
+            self::$cache = $cache;
+            return true;
+        }
+
+        if ($cache === false) {
+            return false;
+        }
+
+        $cacheClass = 'h2o_Cache_'.$cache;
+
+        if (!self::autoload($cacheClass)) {
+            throw new RuntimeException(sprintf('Cache `%s` not found', $cache));
+        }
+
+        self::$cache = new $cacheClass($this->_options);
+    }
+
     /**
      * Parse a template and return a node stack
      *
@@ -164,14 +199,23 @@ class h2o {
      */
     public function parse($source, array $options = null) {
         $parser = new h2o_Parser($this, $source, is_null($options) ? $this->_options : $options);
+        $cached = $parser->parse();
 
-        return $parser->parse();
+        $this->_cache->set('nodes', serialize($cached));
+
+        return $cached;
     }
 
     public function parseToNodes($template) {
-        $source = $this->_loader->load($template);
+        $this->_cache->setFile($template);
 
-        return $this->parse($source);
+        if ($this->isCached($template)) {
+            $source = $this->_loader->load($template);
+
+            return $this->parse($source);
+        }
+
+        return unserialize($this->_cache->get('nodes'));
     }
 
     public function parseString($template) {
@@ -180,6 +224,23 @@ class h2o {
 
     public function loadTemplate($template) {
         $this->_nodes = $this->parseToNodes($template);
+    }
+
+    public function isCached($template = null) {
+        if (is_null($template) && !is_null($this->_template)) {
+            $template = $this->_template;
+        } else if (is_null($template)) {
+            trigger_error('Invalid cache check', E_USER_WARNING);
+            return false;
+        }
+
+        $this->_cache->setFile($template);
+
+        if ($this->_loader->mtime($template) > $this->_cache->mtime()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

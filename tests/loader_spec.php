@@ -59,7 +59,7 @@ class Describe_file_loader extends SimpleSpec {
         # Load template twice to make sure its cached
         $h2o = h2o('emails/campaign1.html', $opt);
         $h2o->loadTemplate('emails/campaign1.html');
-        expects($h2o->Loader->cached)->should_be(true);
+        expects($h2o->isCached())->should_be(true);
         
         # Touch parent template
         sleep(1);

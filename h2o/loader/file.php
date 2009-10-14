@@ -28,4 +28,14 @@ class h2o_Loader_File extends h2o_Loader {
 
         return file_get_contents($path);
     }
+
+    public function mtime($template) {
+        $path = $this->_path.$template;
+
+        if (!is_file($path)) {
+            return 0;
+        }
+
+        return filemtime($path);
+    }
 }
