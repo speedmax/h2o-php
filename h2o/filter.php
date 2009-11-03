@@ -123,7 +123,7 @@ abstract class FilterCollection {
     static public function keys($collection, $keys = false) {
         static $cache = array();
 
-        if (is_null($cache[$collection])) {
+        if (!isset($cache[$collection])) {
             $data   = array();
             $schema = new ReflectionClass($collection);
 
