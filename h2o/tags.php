@@ -277,7 +277,7 @@ class Load_Tag extends H2o_Node {
     private $extension;
 
     function __construct($argstring, $parser, $pos = 0) {
-        $this->extension = stripcslashes(substr($argstring, 1, -1));
+        $this->extension = stripcslashes(preg_replace("/^[\"'](.*)[\"']$/", "$1", $argstring));
         
         if ($parser->runtime->searchpath)
             $this->appendPath($parser->runtime->searchpath);
