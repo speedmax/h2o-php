@@ -122,7 +122,7 @@ class Block_Tag extends H2o_Node {
     public $name;
     public $position;
     public $stack;
-    private $syntax = '/^[a-zA-Z_][a-zA-Z0-9_]*$/';
+    private $syntax = '/^[a-zA-Z_][a-zA-Z0-9_-]*$/';
     
     function __construct($argstring, $parser, $position) {
         if (!preg_match($this->syntax, $argstring))
