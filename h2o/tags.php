@@ -361,5 +361,22 @@ class Autoescape_Tag extends H2o_Node {
     }
 }
 
-H2o::addTag(array('block', 'extends', 'include', 'if', 'for', 'with', 'cycle', 'load', 'debug', 'now', 'autoescape'));
+class Csrf_token_Tag extends H2o_Node {
+    function render($context, $stream) {
+        $token = "";
+        if (isset($_COOKIE["csrftoken"]))
+            $token = $_COOKIE["csrftoken"];
+        else {
+            global $SECRET_KEY;
+            if (defined('SECRET_KEY'))
+                $token = md5(mt_rand() . SECRET_KEY);
+            else
+                $token = md5(mt_rand());
+        }
+        setcookie("csrftoken", $token, time()+60*60*24*365, "/");
+        $stream->write("<div style='display:none'><input type=\"hidden\" value=\"$token\" name=\"csrfmiddlewaretoken\" /></div>");
+    }
+}
+
+H2o::addTag(array('block', 'extends', 'include', 'if', 'for', 'with', 'cycle', 'load', 'debug', 'now', 'autoescape', 'csrf_token'));
 ?>
