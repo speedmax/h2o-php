@@ -5,6 +5,59 @@
  * @todo tags need more test coverage
  */
 
+/**
+ * ifchanged tag
+ *
+ * Usage:
+ *
+ * Variable mode
+ * {% ifchanged data.date %}...{% endifchanged %}
+ *
+ * Lazy mode *not implemented in h2o yet
+ * {% ifchanged %}...{{ data.date }}...{% endifchanged %}
+ *
+ */
+class IfChanged_Tag extends H2o_Node {
+    private $nodelist_true;
+    private $nodelist_false;
+    private $_varlist = null;
+    private $_last_seen = null;
+
+    function __construct($argstring, $parser, $position = 0) {
+        $this->nodelist_true = $parser->parse('endifchanged', 'else');
+
+        if ($parser->token->content === 'else')
+            $this->nodelist_false = $parser->parse('endifchanged');
+
+        $this->_varlist = current(H2o_Parser::parseArguments($argstring));
+
+        if (!$this->_varlist)
+            throw new TemplateSyntaxError('H2o doesn\'t support lazy ifchanged yet. Please, supply a variable.');
+
+    }
+
+    function render($context, $stream) {
+
+        if ($this->_varlist) {
+            $compare_to = $context->resolve($this->_varlist);
+        } else {
+            /**
+             * @todo Rendering method $this->nodelist_true->render() should return a result.
+             * Further more $compare_to variable should be set to this result.
+             */
+            $compare_to = '';
+        }
+
+        if ($compare_to != $this->_last_seen) {
+            $this->_last_seen = $compare_to;
+            $this->nodelist_true->render($context, $stream);
+        } elseif ($this->nodelist_false) {
+            $this->nodelist_false->render($context, $stream);
+        }
+
+    }
+}
+
 class If_Tag extends H2o_Node {
     private $body;
     private $else;
@@ -378,5 +431,5 @@ class Csrf_token_Tag extends H2o_Node {
     }
 }
 
-H2o::addTag(array('block', 'extends', 'include', 'if', 'for', 'with', 'cycle', 'load', 'debug', 'now', 'autoescape', 'csrf_token'));
+H2o::addTag(array('block', 'extends', 'include', 'if', 'ifchanged', 'for', 'with', 'cycle', 'load', 'debug', 'now', 'autoescape', 'csrf_token'));
 ?>
