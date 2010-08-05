@@ -57,8 +57,8 @@ class VariableNode extends H2o_Node {
 
 	function render($context, $stream) {
         $value = $context->resolve($this->variable);
-        $value = $context->applyFilters($value, $this->filters);
-		$stream->write($value);
+        $value = $context->escape($value, $this->variable);
+        $stream->write($value);
 	}
 }
 
