@@ -188,7 +188,7 @@ class H2o_I18n {
         if (!$this->gettext_setup)
             $this->setupGettext();
 
-        if (!class_exists('H2o_Lexer'))
+        if (!class_exists('H2o_Lexer', false))
             require H2O_ROOT.'h2o/parser.php';
         # get all tempaltes
         $templates = $this->getTemplates($this->searchpath, $this->extensions, array(dirname(dirname($this->gettext_path))));
