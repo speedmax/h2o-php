@@ -401,7 +401,8 @@ foot wet.
 
 Contributors
 ---
-
+  
+  - jlogsdon - major refactoring (wip) and bug fixes
   - cyberklin - Added filter support for any context resolve
   - idlesign - Added if_changed tag support
   - metropolis - improve test coverage
