@@ -279,14 +279,14 @@ class With_Tag extends H2o_Node {
     public $position;
     private $variable, $shortcut;
     private $nodelist;
-    private $syntax = '/^([\w]+(:?\.[\w]+)?)\s+as\s+([\w]+(:?\.[\w]+)?)$/';
+    private $syntax = '/^([\w]+(:?\.[\w\d]+)*)\s+as\s+([\w]+(:?\.[\w\d]+)?)$/';
     
     function __construct($argstring, $parser, $position = 0) {
         if (!preg_match($this->syntax, $argstring, $matches))
             throw new TemplateSyntaxError('Invalid with tag syntax');
             
         # extract the long name and shortcut
-        list($this->variable, $this->shortcut) = $matches;
+        list(,$this->variable, ,$this->shortcut) = $matches;
         $this->nodelist = $parser->parse('endwith');
     }
     
