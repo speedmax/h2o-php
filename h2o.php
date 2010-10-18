@@ -60,7 +60,7 @@ class H2o {
             $this->loader->setOptions($this->options);
         } else {
             $loader = "H2o_{$loader}_Loader";
-            if (!class_exists($loader))
+            if (!class_exists($loader, false))
                 throw new Exception('Invalid template loader');
                 
             if (isset($options['searchpath']))
@@ -97,7 +97,7 @@ class H2o {
         if (!$env)
             $env = $this->options;
 
-        if (!class_exists('H2o_Parser'))
+        if (!class_exists('H2o_Parser', false))
             require H2O_ROOT.'h2o/parser.php';
 
         $parser = new H2o_Parser($source, $filename, $this, $env);
@@ -183,7 +183,7 @@ class H2o {
                 $tag = $tagClass;
                 $tagClass = ucwords("{$tagClass}_Tag");
             }
-            if (!class_exists($tagClass)) {
+            if (!class_exists($tagClass, false)) {
                 throw new H2o_Error("{$tagClass} tag is not found");
             }
             $tags[$tag] = $tagClass;
@@ -207,7 +207,7 @@ class H2o {
                 self::addFilter($key, $filter);
             }
             return true;
-        } elseif (is_string($filter) && class_exists($filter) && is_subclass_of($filter, 'FilterCollection')) {
+        } elseif (is_string($filter) && class_exists($filter, false) && is_subclass_of($filter, 'FilterCollection')) {
             foreach (get_class_methods($filter) as $f) {
                 if (is_callable(array($filter, $f)))
                     self::$filters[$f] = array($filter, $f);

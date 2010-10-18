@@ -130,7 +130,7 @@ function h2o_cache($options = array()) {
     $type = $options['cache'];
     $className = "H2o_".ucwords($type)."_Cache";
 
-    if (class_exists($className)) {
+    if (class_exists($className, false)) {
         return new $className($options);
     }
     return false;

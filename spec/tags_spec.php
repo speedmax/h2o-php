@@ -65,4 +65,15 @@ class Describe_for_tag extends SimpleSpec {
         expects($rs)->should_be('odd2odd4odd');
     }
 }
+
+class Describe_with_tag extends SimpleSpec {
+	
+	function should_return_nested_items() {
+		$context = array('granfather'=> array('father'=> array('child'=> 'mike')));
+		$rs = h2o('{% with granfather.father.child as child %}{{ child }}{% endwith %}')->render($context);
+		expects($rs)->should_be('mike');
+	}
+	
+}
+
 ?>

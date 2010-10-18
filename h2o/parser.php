@@ -118,8 +118,12 @@ class H2o_Parser {
                 $current_buffer = &$filter_buffer;
             }
             elseif ($token == 'filter_end') {
-                if (count($filter_buffer))
-                    $result[] = $filter_buffer;
+                if (count($filter_buffer)) {
+	
+                    $i = count($result)-1;
+                    if ( is_array($result[$i]) ) $result[$i]['filters'][] = $filter_buffer;
+                    else $result[$i] = array(0 => $result[$i], 'filters' => array($filter_buffer));
+                }
                 $current_buffer = &$result;
             }
             elseif ($token == 'boolean') {

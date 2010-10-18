@@ -399,6 +399,16 @@ foot wet.
    i plan to implement them that kind of force you to construct a better data
    api any way.
 
+Contributors
+---
+  
+  - jlogsdon - major refactoring (wip) and bug fixes
+  - cyberklin - Added filter support for any context resolve
+  - idlesign - Added if_changed tag support
+  - metropolis - improve test coverage
+  - plus many others
+
+
 Credit
 ------------------------
 There are concepts or ideas burrowed from following projects, Very early version of
