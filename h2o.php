@@ -63,13 +63,14 @@ class H2o {
             if (!class_exists($loader, false))
                 throw new Exception('Invalid template loader');
                 
-            if (isset($options['searchpath']))
-                $this->searchpath = realpath($options['searchpath']).DS;
-            elseif ($file)
+            if (isset($options['searchpath'])){
+			    $this->searchpath = $options['searchpath'];
+            } else if ($file) {
                 $this->searchpath = dirname(realpath($file)).DS;
-            else
+            } else {
                 $this->searchpath = getcwd().DS;
-
+            }
+                
             $this->loader = new $loader($this->searchpath, $this->options);        
         }
         $this->loader->runtime = $this;

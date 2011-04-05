@@ -18,14 +18,19 @@ class H2o_Loader {
 class H2o_File_Loader extends H2o_Loader {
 
     function __construct($searchpath, $options = array()) {
-        if (is_file($searchpath)) {
-            $searthpath = dirname($searchpath).DS;
-        }
-        if (!is_dir($searchpath))
-            throw new TemplateNotFound($filename);
-
-        $this->searchpath = realpath($searchpath) . DS;
-        $this->setOptions($options);
+        // if (is_file($searchpath)) {
+        //     $searthpath = dirname($searchpath).DS;
+        // }
+        // if (!is_dir($searchpath))
+        //     throw new TemplateNotFound($filename);
+        //
+        
+        if (!is_array($searchpath))
+             throw new Exception("searchpath must be an array");
+        
+        
+		$this->searchpath = (array) $searchpath;
+		$this->setOptions($options);
     }
 
     function setOptions($options = array()) {
@@ -35,8 +40,9 @@ class H2o_File_Loader extends H2o_Loader {
     }
     
     function read($filename) {
+                
         if (!is_file($filename))
-            $filename = $this->searchpath . $filename;
+            $filename = $this->get_template_path($this->searchpath,$filename);
 
         if (is_file($filename)) {
             $source = file_get_contents($filename);
@@ -46,14 +52,40 @@ class H2o_File_Loader extends H2o_Loader {
         }
     }
 
-    function read_cache($filename) {
-        if (!$this->cache)
+	function get_template_path($search_path, $filename){
+
+        
+        for ($i=0 ; $i < count($search_path) ; $i++) 
+        { 
+            
+            if(file_exists($search_path[$i] . $filename)) {
+                $filename = $search_path[$i] . $filename;
+                return $filename;
+                break;
+            } else {
+                continue;
+            }
+
+        }
+
+        throw new Exception('TemplateNotFound - Looked for template: ' . $filename);
+
+        
+
+	}
+
+    function read_cache($filename) {        
+        if (!$this->cache){
+             $filename = $this->get_template_path($this->searchpath,$filename);
              return $this->read($filename);
-
-        if (!is_file($filename))
-            $filename = $this->searchpath . $filename;
-
+        }
+            
+        if (!is_file($filename)){
+            $filename = $this->get_template_path($this->searchpath,$filename);
+        }
+            
         $filename = realpath($filename);
+        
         $cache = md5($filename);
         $object = $this->cache->read($cache);
         $this->cached = $object && !$this->expired($object);
@@ -86,7 +118,7 @@ class H2o_File_Loader extends H2o_Loader {
         $files = array_merge(array($object->filename), $object->templates);
         foreach ($files as $file) {
             if (!is_file($file))
-                $file = $this->searchpath.$file;
+                $file = $this->get_template_path($this->searchpath,$filename);
             
             if ($object->created < filemtime($file))
                 return true;
