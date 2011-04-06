@@ -114,7 +114,8 @@ class For_Tag extends H2o_Node {
         if ($parser->token->content === 'else')
             $this->else = $parser->parse('endfor');
 
-        @list(,$this->key, $this->item, $this->iteratable, $this->limit, $this->reversed) = $match;
+        $match = array_pad($match, 6, '');
+        list(,$this->key, $this->item, $this->iteratable, $this->limit, $this->reversed) = $match;
         
         if ($this->limit)
             $this->limit = (int) $this->limit;
