@@ -212,17 +212,47 @@ class H2o_Apc_Cache {
     }
 }
 
-class H2o_Memcache_Cache {
-    function __construct($scope, $options = array()) {
-    }
-    
-    function read($filename) {
-    }
-    
-    function write($filename, $content) {
-    }
-    
-    function flush() {}
-}
 
-?>
+class H2o_Memcache_Cache {
+	var $ttl	= 3600;
+    var $prefix = 'h2o_';
+	/**
+	 * @var host default is file socket 
+	 */
+	var $host	= 'unix:///tmp/memcached.sock';
+	var $port	= 0;
+    var $object;
+    function __construct( $scope, $options = array() ) {
+    	if ( !function_exists( 'memcache_set' ) )
+            throw new Exception( 'Memcache extension needs to be loaded to use memcache' );
+            
+        if ( isset( $options['cache_ttl'] ) ) {
+            $this->ttl = $options['cache_ttl'];
+        } 
+        if( isset( $options['cache_prefix'] ) ) {
+            $this->prefix = $options['cache_prefix'];
+        }
+		
+		if( isset( $options['host'] ) ) {
+            $this->host = $options['host'];
+        }
+		
+		if( isset( $options['port'] ) ) {
+            $this->port = $options['port'];
+        }
+		
+        $this->object = memcache_connect( $this->host, $this->port );
+    }
+    
+    function read( $filename ){
+    	return memcache_get( $this->object, $this->prefix.$filename );
+    }
+    
+    function write( $filename, $content ) {
+    	return memcache_set( $this->object,$this->prefix.$filename,$content , MEMCACHE_COMPRESSED,$this->ttl );
+    }
+    
+    function flush(){
+    	return memcache_flush( $this->object );
+    }
+}
