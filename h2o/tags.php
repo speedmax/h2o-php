@@ -255,15 +255,45 @@ class Extends_Tag extends H2o_Node {
     }
 }
 
+/**
+ * include tag
+ *
+ * Usage:
+ *
+ * Simple inclusion
+ *     {% include "./subtemplate.html" %}
+ *
+ *
+ * Inclusion with additional context variables passing:
+ *     {% include "./subtemplate.html" with foo=bar spam="eggs" %}
+ *
+ * Note: Double quotes matter. In this example 'foo' template variable of subtemplate.html
+ * would be initialized with 'bar' variable contents (from main template context),
+ * while 'spam' template variable of subtemplate.html would be set to simple string ('eggs').
+ *
+ */
 class Include_Tag extends H2o_Node {
     private $nodelist;
-    private $syntax = '/^["\'](.*?)["\']$/';
-    
-    function __construct($argstring, $parser, $position = 0) {
-        if (!preg_match($this->syntax, $argstring)) 
-            throw new TemplateSyntaxError();
+    private $syntax = '/^["\'](.*?)["\'](\s+with\s+(.+))?$/';
+    private $_additional_context = array();
 
-        $this->filename = stripcslashes(substr($argstring, 1, -1));
+    function __construct($argstring, $parser, $position = 0) {
+        if (!preg_match($this->syntax, $argstring, $matches)) {
+            throw new TemplateSyntaxError();
+        }
+
+        $matches_count = count($matches);
+
+        if ($matches_count > 2) {
+            // "with" statement supplied.
+            $with_vars = explode(' ', $matches[3]);
+            foreach ($with_vars as $var_str) {
+                $eq_pos = strpos($var_str, '=');
+                $this->_additional_context[substr($var_str, 0, $eq_pos)] = substr($var_str, $eq_pos+1);
+            }
+        }
+
+        $this->filename = stripcslashes($matches[1]);
         $this->nodelist = $parser->runtime->loadSubTemplate($this->filename, $parser->options);
         $parser->storage['templates'] = array_merge(
             $this->nodelist->parser->storage['templates'], $parser->storage['templates']
@@ -272,6 +302,16 @@ class Include_Tag extends H2o_Node {
     }
 
     function render($context, $stream) {
+        foreach ($this->_additional_context as $key => $value) {
+            if (strpos($value, '"') === false) {
+                // Context variable supplied as value. Needs to be resolved.
+                $value = $context->getVariable($value);
+            } else {
+                $value = trim($value, '"');
+            }
+            $context[$key] = $value;
+        }
+
         $this->nodelist->render($context, $stream);
     }
 }
