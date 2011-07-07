@@ -18,14 +18,19 @@ class H2o_Loader {
 class H2o_File_Loader extends H2o_Loader {
 
     function __construct($searchpath, $options = array()) {
-        if (is_file($searchpath)) {
-            $searthpath = dirname($searchpath).DS;
-        }
-        if (!is_dir($searchpath))
-            throw new TemplateNotFound($filename);
-
-        $this->searchpath = realpath($searchpath) . DS;
-        $this->setOptions($options);
+        // if (is_file($searchpath)) {
+        //     $searthpath = dirname($searchpath).DS;
+        // }
+        // if (!is_dir($searchpath))
+        //     throw new TemplateNotFound($filename);
+        //
+        
+        if (!is_array($searchpath))
+             throw new Exception("searchpath must be an array");
+        
+        
+		$this->searchpath = (array) $searchpath;
+		$this->setOptions($options);
     }
 
     function setOptions($options = array()) {
@@ -35,8 +40,9 @@ class H2o_File_Loader extends H2o_Loader {
     }
     
     function read($filename) {
+                
         if (!is_file($filename))
-            $filename = $this->searchpath . $filename;
+            $filename = $this->get_template_path($this->searchpath,$filename);
 
         if (is_file($filename)) {
             $source = file_get_contents($filename);
@@ -46,14 +52,40 @@ class H2o_File_Loader extends H2o_Loader {
         }
     }
 
-    function read_cache($filename) {
-        if (!$this->cache)
+	function get_template_path($search_path, $filename){
+
+        
+        for ($i=0 ; $i < count($search_path) ; $i++) 
+        { 
+            
+            if(file_exists($search_path[$i] . $filename)) {
+                $filename = $search_path[$i] . $filename;
+                return $filename;
+                break;
+            } else {
+                continue;
+            }
+
+        }
+
+        throw new Exception('TemplateNotFound - Looked for template: ' . $filename);
+
+        
+
+	}
+
+    function read_cache($filename) {        
+        if (!$this->cache){
+             $filename = $this->get_template_path($this->searchpath,$filename);
              return $this->read($filename);
-
-        if (!is_file($filename))
-            $filename = $this->searchpath . $filename;
-
+        }
+            
+        if (!is_file($filename)){
+            $filename = $this->get_template_path($this->searchpath,$filename);
+        }
+            
         $filename = realpath($filename);
+        
         $cache = md5($filename);
         $object = $this->cache->read($cache);
         $this->cached = $object && !$this->expired($object);
@@ -86,7 +118,7 @@ class H2o_File_Loader extends H2o_Loader {
         $files = array_merge(array($object->filename), $object->templates);
         foreach ($files as $file) {
             if (!is_file($file))
-                $file = $this->searchpath.$file;
+                $file = $this->get_template_path($this->searchpath,$filename);
             
             if ($object->created < filemtime($file))
                 return true;
@@ -212,17 +244,47 @@ class H2o_Apc_Cache {
     }
 }
 
-class H2o_Memcache_Cache {
-    function __construct($scope, $options = array()) {
-    }
-    
-    function read($filename) {
-    }
-    
-    function write($filename, $content) {
-    }
-    
-    function flush() {}
-}
 
-?>
+class H2o_Memcache_Cache {
+	var $ttl	= 3600;
+    var $prefix = 'h2o_';
+	/**
+	 * @var host default is file socket 
+	 */
+	var $host	= 'unix:///tmp/memcached.sock';
+	var $port	= 0;
+    var $object;
+    function __construct( $scope, $options = array() ) {
+    	if ( !function_exists( 'memcache_set' ) )
+            throw new Exception( 'Memcache extension needs to be loaded to use memcache' );
+            
+        if ( isset( $options['cache_ttl'] ) ) {
+            $this->ttl = $options['cache_ttl'];
+        } 
+        if( isset( $options['cache_prefix'] ) ) {
+            $this->prefix = $options['cache_prefix'];
+        }
+		
+		if( isset( $options['host'] ) ) {
+            $this->host = $options['host'];
+        }
+		
+		if( isset( $options['port'] ) ) {
+            $this->port = $options['port'];
+        }
+		
+        $this->object = memcache_connect( $this->host, $this->port );
+    }
+    
+    function read( $filename ){
+    	return memcache_get( $this->object, $this->prefix.$filename );
+    }
+    
+    function write( $filename, $content ) {
+    	return memcache_set( $this->object,$this->prefix.$filename,$content , MEMCACHE_COMPRESSED,$this->ttl );
+    }
+    
+    function flush(){
+    	return memcache_flush( $this->object );
+    }
+}

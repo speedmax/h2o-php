@@ -332,7 +332,9 @@ use apc cache
 
 `$template = new H2o('index.html', array('cache'=>'apc'));`
 
-memcache module not implemented yet
+use memcache cache
+
+`$template = new H2o('index.html', array('cache'=>'memcache'));`
 
 disable caching
 
