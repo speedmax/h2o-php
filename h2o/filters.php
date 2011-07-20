@@ -15,6 +15,10 @@ class CoreFilters extends FilterCollection {
     static function join($value, $delimiter = ', ') {
         return join($delimiter, $value);
     }
+
+    static function length($value) {
+        return count($value);
+    }
     
     static function urlencode($data) {
         if (is_array($data)) {
