@@ -64,14 +64,15 @@ class H2o {
                 throw new Exception('Invalid template loader');
                 
             if (isset($options['searchpath'])){
-			    $this->searchpath = $options['searchpath'];
+                $this->searchpath = $options['searchpath'];
             } else if ($file) {
                 $this->searchpath = dirname(realpath($file)).DS;
             } else {
                 $this->searchpath = getcwd().DS;
             }
-                
-            $this->loader = new $loader($this->searchpath, $this->options);        
+
+            $loader_searchpath = is_array($this->searchpath) ? $this->searchpath : array($this->searchpath);
+            $this->loader = new $loader($loader_searchpath, $this->options);        
         }
         $this->loader->runtime = $this;
         

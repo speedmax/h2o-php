@@ -118,7 +118,7 @@ class H2o_File_Loader extends H2o_Loader {
         $files = array_merge(array($object->filename), $object->templates);
         foreach ($files as $file) {
             if (!is_file($file))
-                $file = $this->get_template_path($this->searchpath,$filename);
+                $file = $this->get_template_path($this->searchpath, $file);
             
             if ($object->created < filemtime($file))
                 return true;
