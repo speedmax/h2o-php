@@ -387,6 +387,15 @@ class Debug_Tag extends H2o_Node {
     }
 }
 
+class Comment_Tag extends H2o_Node {
+    function __construct($argstring, $parser, $position) {
+        $parser->parse('endcomment');
+    }
+
+    function render($context, $stream, $index = 1) {
+    }
+}
+
 class Now_Tag extends H2o_Node {
     function __construct($argstring, $parser, $pos=0) {
         $this->format = $argstring;
@@ -436,5 +445,5 @@ class Csrf_token_Tag extends H2o_Node {
     }
 }
 
-H2o::addTag(array('block', 'extends', 'include', 'if', 'ifchanged', 'for', 'with', 'cycle', 'load', 'debug', 'now', 'autoescape', 'csrf_token'));
+H2o::addTag(array('block', 'extends', 'include', 'if', 'ifchanged', 'for', 'with', 'cycle', 'load', 'debug', 'comment', 'now', 'autoescape', 'csrf_token'));
 ?>
