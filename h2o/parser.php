@@ -2,7 +2,8 @@
 class H2o_Lexer {
     function __construct($options = array()) {
         $this->options = $options;
-        
+
+        $trim = '';
         if ($this->options['TRIM_TAGS'])
             $trim = '(?:\r?\n)?';
 
