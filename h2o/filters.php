@@ -15,6 +15,10 @@ class CoreFilters extends FilterCollection {
     static function join($value, $delimiter = ', ') {
         return join($delimiter, $value);
     }
+
+    static function length($value) {
+        return count($value);
+    }
     
     static function urlencode($data) {
         if (is_array($data)) {
@@ -72,6 +76,12 @@ class StringFilters extends FilterCollection {
     
     static function escape($value, $attribute = false) {
         return htmlspecialchars($value, $attribute ? ENT_QUOTES : ENT_NOQUOTES);
+    }
+
+    static function escapejson($value) {
+        // The standard django escapejs converts all non-ascii characters into hex codes.
+        // This function encodes the entire data structure, and strings get quotes around them.
+        return json_encode($value);
     }
     
     static function force_escape($value, $attribute = false) {

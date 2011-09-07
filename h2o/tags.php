@@ -130,6 +130,12 @@ class For_Tag extends H2o_Node {
     function render($context, $stream) {
         $iteratable = $context->resolve($this->iteratable);
 
+        // Make debugging a bit easier
+        if( ! is_array( $iteratable ) && ! $iteratable instanceof Traversable ) {
+            $repr = (is_object( $iteratable ) ? '<class: ' . get_class( $iteratable ) . '>' : (string)$iteratable );
+            throw new InvalidArgumentException("The for tag cannot iterate over the value: " . $repr);
+        }
+
         if ($this->reversed)
             $iteratable = array_reverse($iteratable);
 
@@ -376,8 +382,17 @@ class Debug_Tag extends H2o_Node {
         } else {
             $object = $context->scopes[0];
         }
-        $output = "<pre>". print_r($object, true). "</pre>";
+        $output = "<pre>" . htmlspecialchars( print_r($object, true) ) . "</pre>";
         $stream->write($output);
+    }
+}
+
+class Comment_Tag extends H2o_Node {
+    function __construct($argstring, $parser, $position) {
+        $parser->parse('endcomment');
+    }
+
+    function render($context, $stream, $index = 1) {
     }
 }
 
@@ -390,7 +405,6 @@ class Now_Tag extends H2o_Node {
     }
     
     function render($contxt, $stream) {
-        sleep(1);
         $time = date($this->format);
         $stream->write($time);
     }
@@ -431,5 +445,5 @@ class Csrf_token_Tag extends H2o_Node {
     }
 }
 
-H2o::addTag(array('block', 'extends', 'include', 'if', 'ifchanged', 'for', 'with', 'cycle', 'load', 'debug', 'now', 'autoescape', 'csrf_token'));
+H2o::addTag(array('block', 'extends', 'include', 'if', 'ifchanged', 'for', 'with', 'cycle', 'load', 'debug', 'comment', 'now', 'autoescape', 'csrf_token'));
 ?>
