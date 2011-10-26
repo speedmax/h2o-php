@@ -125,7 +125,7 @@ class H2o_Context implements ArrayAccess {
                 $result = stripcslashes(substr($name, 1, -1));
             }
         }
-        if (!empty(self::$lookupTable)) {
+        if (!empty(self::$lookupTable) && $result == Null) {
             $result = $this->externalLookup($name);
         }
         $result = $this->applyFilters($result,$filters);
