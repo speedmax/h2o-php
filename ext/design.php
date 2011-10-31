@@ -15,7 +15,7 @@ class Lorem_Tag extends H2o_Node {
         $this->mode = $mode? $mode : 'p';
         $this->common = !$random;
     }
-    
+
     function render($context, $stream) {
         $output = '';
         switch($this->mode) {
@@ -45,8 +45,8 @@ function lorem_sentences($count) {
     foreach(range(1, $count) as $s) {
         $parts = array();
         foreach (range(1, rand(1,5)) as $j)
-            $parts[] = lorem_words(rand(3,12)); 
-        $sentenses[] = join(', ', $parts);   
+            $parts[] = lorem_words(rand(3,12));
+        $sentenses[] = join(', ', $parts);
     }
     return join($delimiter[rand(0,1)].' ', $sentenses).$delimiter[rand(0,1)];
 }
@@ -56,7 +56,7 @@ function lorem_paragraphs($count, $common = false) {
     foreach(range(1, $count) as $s) {
         if ($s == 1 && $common)
             $paras[] = lorem_dictionary('common_p');
-        else 
+        else
             $paras[] = lorem_sentences(rand(1,4));
     }
     return $paras;

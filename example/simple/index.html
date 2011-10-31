@@ -6,14 +6,14 @@
   {% for user in users limit:3 %}
     <li>
       <a href="/users/{{ user.username|urlencode }}">{{ user.username }}</a> -
-      
+
       {{ user.tasks.first | safe }}
     </li>
-    
+
     {% if not user.username == 'foobar' %}
         haha
     {% endif %}
-    
+
   {% endfor %}
   </ul>
 
