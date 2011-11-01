@@ -24,7 +24,7 @@
         <h1>My Webpage</h1>
         <h2>My Subtitle</h2>
       </div>
-      
+
       <div id="navigation">
         <ul>
         {% block navigation %}
@@ -34,13 +34,13 @@
         {% endblock %}
         </ul>
       </div>
-      
+
       <div id="content">
         {% block content %}{% endblock %}
       </div>
       <div id="footer">
         {% include 'shared/about.html' %}
-        
+
         &copy; Copyright 2007 by Yourself
       </div>
     {% endblock %}

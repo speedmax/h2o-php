@@ -10,7 +10,7 @@
 	<h1>{{  _("Internationalized templates") }}</h1>
 
 	{% trans "Select languages" %}
-	
+
 	<a href="?lang=en">{% trans "English" %}</a> |
 	<a href="?lang=fi">{% trans "Finish"%} </a> |
 	<a href="?lang=fr">{% trans "French: %}</a> |
@@ -18,8 +18,8 @@
 
   <p>
 {% blocktrans %}
-    (software engineering) The act or process of making a product suitable for 
-    international markets, typically by making text messages easily translatable 
+    (software engineering) The act or process of making a product suitable for
+    international markets, typically by making text messages easily translatable
     and ensuring support of non-Latin character sets.
 {% endblocktrans %}
 	</p>
@@ -36,7 +36,7 @@
 	    there are number of {{ count }} items.
 	{% endblocktrans %}
 	</p>
-	
+
 	<ul>
 	{% for index, user in users %}
 	    {{ user.username }} - {{ user.tasks.length }}
@@ -47,7 +47,7 @@
 		{% plural %}
 		    {{ name }} has {{ count }} tasks
 		{% endblocktrans %}
-	
+
 		<ol>
 		{% for task in user.tasks %}
 		   <li>{{ task }}</li>
@@ -59,7 +59,7 @@
 </div>
 
 <div id="footer">
-    
+
 </div>
 </body>
 </html>
