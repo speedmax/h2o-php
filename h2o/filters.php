@@ -39,10 +39,27 @@ class CoreFilters extends FilterCollection {
         return $string = trim(strtolower($string));
     }
  
-    static function urlize($url, $truncate = false) {
-        if (preg_match('/^(http|https|ftp:\/\/([^\s"\']+))/i', $url, $match))
-            $url = "<a href='{$url}'>". ($truncate ? truncate($url,$truncate): $url).'</a>';
-        return $url;
+    static function urlize( $string, $truncate = false ) {
+        $reg_exUrl = "/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?/";
+        preg_match_all($reg_exUrl, $string, $matches);
+        $usedPatterns = array();
+        foreach($matches[0] as $pattern){
+            if(!array_key_exists($pattern, $usedPatterns)){
+                $usedPatterns[$pattern]=true;
+                $string = str_replace($pattern, "<a href=\"{$pattern}\" rel=\"nofollow\">{$pattern}</a>", $string);
+            }
+        }
+
+        $reg_exEmail = "/[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}/";
+        preg_match_all($reg_exEmail, $string, $matches);
+        $usedPatterns = array();
+        foreach($matches[0] as $pattern){
+            if(!array_key_exists($pattern, $usedPatterns)){
+                $usedPatterns[$pattern]=true;
+                $string = str_replace($pattern, "<a href=\"mailto:{$pattern}\">{$pattern}</a>", $string);
+            }
+        }
+        return $string;
     }
 
     static function set_default($object, $default) {
