@@ -6,7 +6,7 @@ Being a martial arts fan, I borrow a quote.
 
 H2O template
 ------------------------
-H2O is markup language for PHP that has taken a lot of inspiration from django.
+H2O is markup language for PHP that has taken a lot of inspiration from Django.
 
 
 __Features__
@@ -66,8 +66,8 @@ With SVN
             h2o/
 
 
- 2. Use `require 'h2o/h2o.php'` in your php statement to include h2o library.
- 3. Below is a basic code example to get your project going. 
+ 2. Use `require 'h2o/h2o.php'` in your php files to include the h2o library.
+ 3. Below is a basic code sample to get your project going. 
  3. Check out the *\example* and *\specs* dirs to see some of h2o's more interesting features in action. 
  
 *templates/index.html*
@@ -91,8 +91,8 @@ With SVN
 Useful links
 ------------------------
 
- * Please submit patches or bug reports to our [lighthouse bug tracker][issue]
- * Checkout [Google group][group] for h2o related discussion
+ * Please submit patches or bug reports to our [lighthouse bug tracker][issue].
+ * Check out our [Google group][group] for h2o-related discussion.
 
  [issue]:http://idealian.lighthouseapp.com/projects/11041-h2o-template-language
  [group]:http://groups.google.com/group/h2o-template-php
