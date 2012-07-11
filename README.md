@@ -7,7 +7,9 @@ Being a martial arts fan, I borrow a quote.
 H2O template
 ------------------------
 H2O is markup language for PHP that has taken a lot of inspiration from django.
-Features:
+
+
+__Features__
  * Readable and human-friendly syntax.
  * Easy to use and maintain
  * Encourages reuse in templates by allowing template inclusion and inheritance.
@@ -65,8 +67,8 @@ With SVN
 
 
  2. Use `require 'h2o/h2o.php'` in your php statement to include h2o library.
- 3. Below is a quick start code example to get your project jump-started. 
- 3. Checkout example and specs if you are in the mood for exploration. 
+ 3. Below is a basic code example to get your project going. 
+ 3. Check out the *\example* and *\specs* dirs to see some of h2o's more interesting features in action. 
  
 *templates/index.html*
 
@@ -144,9 +146,11 @@ You can chain multiple filters together and use a pipe ( | ) character to separa
 them. `{{ document.body|escape|nl2br }}`
 
 __Filter arguments__  
-Filters can accept arguments. For example `{{ document.description|truncate 20 }}` 
-will display first 20 characters of the document description.
-Moreover, there are cases where you want to pass in multiple arguments. 
+Filters can accept arguments. For example:
+`{{ document.description|truncate 20 }}` 
+will display the first 20 characters of the document's description.
+
+Moreover, there are cases where you might want to pass in multiple arguments. 
 Use commas ( , ) to separate them:
 `{{ person.bio|truncate 20, "..." }}`
 
@@ -179,10 +183,10 @@ There are inline tags `{% inline_tag %}` or tags that requires a
 close tag. For example: `{% if condition %} ... {% endif %}` 
 
 
-### if tag
+### The "if" tag
 
-if tags evaluate a variable or a simple expression. when results true the if tag 
-body will be render or else part will be rendered.
+`if` tags evaluate either a variable or a simple expression. If the result of the `if` 
+expression is *true*, then the contents of the `if` block will be allowed to render.
     
     {% if person.is_adult %}
         You are old enough.
@@ -190,32 +194,35 @@ body will be render or else part will be rendered.
         sorry, you are too young for that.
     {% endif %}
 
-### for tag
+### The "for" tag
 
-For tag will iterate over a array of items. 
+`for` tags allow iteratation over an array of items. 
  
     {% for task in tasks %}
         {{ task }}
     {% endfor %}
 
-Above will print all the tasks.
+The above snippet will print out each "task" in the "tasks" array.
 
 Template inheritance
 ------------------------
-H2o supports template inheritance, it is very powerful and the concept is easy 
-to understand. 
+H2o supports template inheritance. Inheritance allows you to factor out a lot 
+of common code that would otherwise be duplicated across most of your templates.
 
-Template inheritance is implemented using block, extends tag, for programmers 
-who is familiar with object oriented principles this is easy. 
+Template inheritance is implemented using the `block` and `extends` tags, with child templates
+*extending* their parent templates.
+**Word of Caution:**
+ * H2o templates only support single inheritance (just like PHP!), and currently do not support deep inheritance chains.
 
-Quote from Django doc
+
+Quote from the Django docs:
 > ... a base skeleton template that contains all the common elements of your 
 > site and defines blocks that child templates can override.
 
 
 *Example:*
 
-_base.html_ - to define the base structure of the page.
+_base.html_ - defines the base structure of our pages.
 
     <html>
      <head><title>{%block title %}This is a page title {% endblock %}</title></head>
@@ -233,17 +240,17 @@ _base.html_ - to define the base structure of the page.
      </body>
     </html>
 
-As you can see, the base template is a typical web page using a two column layout, 
-we defined two blocks (content, sidebar) and HTML code common across all your page.
+As you can see, the base template is a typical web page using a two column layout. 
+We defined two blocks (`content` and `sidebar`) and HTML code common across all of our pages.
 
 
-_page.html_ - to define a template specific of a page.
+_page.html_ - defines a page-specific template.
 
     {% extends 'base.html' %}
     
     {% block content %}
         <h1> extended page </h1>
-        <p> Body of extended page</p>
+        <p> Body of extended page </p>
     {% endblock %}
     
     {% block sidebar %}
@@ -251,11 +258,12 @@ _page.html_ - to define a template specific of a page.
     {% endblock %}
 
 
-The page.html extends base.html, now you will be able to override any block 
-previously defined. 
+The `page.html` extends `base.html`, allowing us to override any block 
+previously defined in `base.html`. 
 
-There is a very good article about template inheritance in Django, in area of 
-template inheritance h2o work exactly the same way.
+Below is an excellent article about template inheritance in Django. If you wish to understand H2o's
+template-inheritance system, this would be a great spot to start, since H2o's template-inheritance system 
+is strongly influenced by Django's.
 
 [Power of inheritance][3] is a very good blog post explaining inheritance 
 
@@ -263,16 +271,15 @@ template inheritance h2o work exactly the same way.
 
 *Tips*
 
-* if you found you have a lot of common element inside the template, it may be a 
-  good idea to put that portion of template in side a block in a base template. 
-* block gives you a hook, especially useful they are useful for javascript, css
-  too
+* If you have found that you have several common elements inside the same template, it may be a 
+  good idea to put that portion of the template inside a `block` in a base template. 
+* `block` give you a hook, which is useful, since these can help with javascript and css too.
 * When defining a block use a short and distinctive name
 
 
 
 ### Configuration
-There are a range of option to set up the template system the way you want it.
+There are a range of options for configuring the template engine.
 
     <?php
         $h2o = new H2o('template.tpl', array(
@@ -280,15 +287,15 @@ There are a range of option to set up the template system the way you want it.
         ));
     ?>
 
-#### loader
-name of loader or a instance of H2o_Loader
+#### Loader
+The name of the loader or an instance of H2o_Loader
 
 __Use file loader [default]__
 
 ` $template = new H2o('index.html', array('loader'=>'file'); `
 
 
-__Advance setup__
+__Advanced setup__
     <?php
     $loader = new H2o_File_Loader($custom_searchpath);
     $template = new H2o('index.html', array('loader'=> $loader );
@@ -296,8 +303,8 @@ __Advance setup__
     
 __Use dictionary loader__
 
-You may want to load template from other resource than file then this will be your
-friend. h2o use `dict_loader()` for testing.
+If you want to load templates from resources other than files, then this will be your
+friend. H2o uses `dict_loader()` for testing.
 
     <?php
         $loader = dict_loader(array(
@@ -306,50 +313,51 @@ friend. h2o use `dict_loader()` for testing.
         $template = new H2o('index.html', array('loader' => $loader'));
     ?> 
 
-#### searchpath
+#### Searchpath
 
 default: this will be the base path of your template
 
-h2o use this path to load additional templates and extensions. 
+H2o use this path to load additional templates and extensions. 
 
-You can either explicity set the search path
+You can either explicity set the search path,
 
 `$template = new H2o('index.html', array('searchpath' => '/sites/common_templates'));`
 
-or It will try to find the searchpath for you
+or h2o will try to find the searchpath for you.
 
 `$template = new H2o('/sites/common_templates/index.html');`
 
-#### cache
-define type of caching engine h2o needs to use, set to false to disable 
-caching, you can read more about performance and caching in following sections
+#### Cache
+You can define the type of caching engine h2o should use, if any. 
+Set 'cache' to false to disable caching.
+You can read more about performance and caching in following sections
 
-use file cache [default]
+Use file cache [default]
 
 `$template = new H2o('index.html', array('cache'=>'file'));`
 
-use apc cache
+Use apc cache:
 
 `$template = new H2o('index.html', array('cache'=>'apc'));`
 
-use memcache cache
+Use memcache cache
 
 `$template = new H2o('index.html', array('cache'=>'memcache'));`
 
-disable caching
+Disable caching
 
 `$template = new H2o('index.html', array('cache'=>false));`
 
-#### cache_dir
-When file cache is used, you can define where you want templates to be cached. 
+#### Cache_dir
+When the file cache is used, you can define where you want templates to be cached. 
 
-it will put cached template in same location as that template
+It will put a cached template in same location as the normal template
 
 `$template = new H2o('index.html', array('cache_dir'=>'/tmp/cached_templates'));`
 
-#### cache_ttl
-how long template cache will be lived (defaults: 1 hour), template fregment cache that is bundled
-in cache extension will use this as default ttl value.
+#### Cache_ttl
+"cache_ttl" specifies how long a cached template should be used (defaults: 1 hour) before it is recompiled. The template fragment cache
+that is bundled in the cache extension will use this as default ttl value.
 
 `$template = new H2o('index.html', array('cache_ttl' => 3600));`
 
@@ -357,12 +365,12 @@ in cache extension will use this as default ttl value.
 Performance and Caching
 ------------------------
 
-Caching can increase performance since it skips step of inefficient template parsing, 
-H2o caches the template objects(internal data structure of a template) and bundled
-multiple caching backend includes File, APC and memcache.
+Caching can increase performance since it skips step of inefficient template parsing. 
+H2o caches the template objects (the internal data structure of a template) and the bundled
+caching backends include File, APC, and Memcache.
 
 ### File cache
-By default h2o uses file cache to store template objects, change h2o option `cache_dir` to where you 
+By default h2o uses the file cache to store template objects. Change h2o option `cache_dir` to where you 
 want to store template cache (ie: /tmp).
   
     <?php
@@ -373,15 +381,15 @@ want to store template cache (ie: /tmp).
     ?>
 
 ### APC cache
-APC is a opt-code cache php extension that also provides a robust object cache, 
-and the performance is generally 10-30% faster than file caching. 
+APC is an op-code and object cache extension for php whose performance is 
+generally 10-30% better than just plain file caching. 
 
     <?php
         $template = new h2o('homepage.tpl', array('cache' => 'apc'));
     ?>
 
 ### Memcache
-currently not implemented
+Currently not implemented
 
 
 Extending H2o
@@ -390,36 +398,37 @@ Extending H2o
 
 Known issues
 ------------------------
-Realistically these are very very rare cases, so don't let it stop you getting your
-foot wet. 
+Yes, h2o has them. However, if you are careful, these shouldn't hinder your template development.
+The deep inheritance issue is a bit problematic for some template architectures, but again, if you 
+are careful, and perhaps a bit inventive, it won't hinder you terribly much.
 
- * `{{ block.super }}` doesn't work with very deep inheritance so if `{{ block.super }}`
+ * `{{ block.super }}` doesn't work with more than 1 level of inheritance yet, so if `{{ block.super }}`
    invokes another `{{ block.super }}` it won't work just yet.  
- * If conditions doesn't support multiple expression or math yet, 
+ * 'if' conditions don't support multiple expressions or mathematical expressions yet, like: 
    `{% if something > 3 or something < 2 %}` or `{% if something + else > 12 %}`
-    and i don't think
-   i plan to implement them that kind of force you to construct a better data
-   api any way.
+    These likely will not be implemented in the future unless some daring soul implements them and 
+    contributes the code back to the h2o-php project.
+    
 
 Contributors
 ---
   
-  - jlogsdon - major refactoring (wip) and bug fixes
+  - jlogsdon - Major refactoring (wip) and bug fixes
   - cyberklin - Added filter support for any context resolve
   - idlesign - Added if_changed tag support
-  - metropolis - improve test coverage
+  - metropolis - Improved our test coverage
   - plus many others
 
 
 Credit
 ------------------------
-There are concepts or ideas burrowed from following projects, Very early version of
-h2o was based on the code base of Ptemplates so thanks to Armin Ronacher.
-
+H2o borrows ideas and/or concepts from the following projects:
 
  - Django template - Django web development framework.
  - Ptemplates - Armin Ronacher's pet project for a django port in PHP.
  - Jinja - Django inspired template in Python.
+
+Special Thanks: Armin Ronacher, since early versions of h2o were based off of his Ptemplates project.
 
 The MIT License
 ------------------------
