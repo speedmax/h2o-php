@@ -1,19 +1,19 @@
 H2O template markup
 ========================
-Being a martial art fan, I burrow a quote.
+Being a martial arts fan, I borrow a quote.
 
 
 
-H2o template
+H2O template
 ------------------------
-H2O is markup language for PHP that taken a lot of inspiration from django.
-
- * Readable and human friendly syntax.
+H2O is markup language for PHP that has taken a lot of inspiration from django.
+Features:
+ * Readable and human-friendly syntax.
  * Easy to use and maintain
- * Encourage reuse in templates by template inclusion and inheritance.
- * highly extensible through filters, tags and template extensions.
- * Bundled rich set of filters and tags for string formatting, HTML helpers and 
-   internationalization. 
+ * Encourages reuse in templates by allowing template inclusion and inheritance.
+ * Highly extensible through filters, tags, and template extensions.
+ * Includes a rich set of filters and tags for string formatting, HTML helpers and 
+   internationalization support.
 
 
 Requirement
@@ -28,12 +28,12 @@ News
  - version 0.4 
    1. **Breaking changes** autoescape is now turned on by default
    2. Improved searchpath and file loading handling
-   3. Improved Handling on PHP overloaded objects
+   3. Improved handling on PHP overloaded objects
    4. Plenty of bug fixes
  - version 0.3
    1. Support internationalized templates and translation parsing toolkit
    2. Performance optimization on context lookup
-   3. Fixed operator pasing
+   3. Fixed operator parsing
 
 Getting started
 ------------------------
@@ -53,7 +53,7 @@ With SVN
 `svn checkout http://h2o-template.googlecode.com/svn/trunk/ h2o`
 
 ### Installation
- 1. Download and extract h2o in your project path or your php include path
+ 1. Download and extract h2o into your project path or your php include path
 
     Sample file structure setup 
      
@@ -64,9 +64,9 @@ With SVN
             h2o/
 
 
- 2. use `require 'h2o/h2o.php'` in your php statement to include h2o library
- 3. Below is a quick start code example to get a kick start 
- 3. checkout example and specs if you are in the mood for exploration. 
+ 2. Use `require 'h2o/h2o.php'` in your php statement to include h2o library.
+ 3. Below is a quick start code example to get your project jump-started. 
+ 3. Checkout example and specs if you are in the mood for exploration. 
  
 *templates/index.html*
 
@@ -89,7 +89,7 @@ With SVN
 Useful links
 ------------------------
 
- * Please submit patches or bug report to our [lighthouse bug tracker][issue]
+ * Please submit patches or bug reports to our [lighthouse bug tracker][issue]
  * Checkout [Google group][group] for h2o related discussion
 
  [issue]:http://idealian.lighthouseapp.com/projects/11041-h2o-template-language
@@ -102,10 +102,10 @@ Syntax explanation
 ## variable
 `{{ variable }}`
 
-Use dot (.) to access attribute of a variable
+Use dot (.) to access attributes of a variable
 
 #### variable lookup order
-1. key of associative array
+1. key of an associative array
 2. array-index 
 3. object attribute
 4. object method call
@@ -126,36 +126,36 @@ Use dot (.) to access attribute of a variable
         $h2o->render(compact('person'));
     ?>
     
-Let's say you have assigned a person variable in your php script, following 
-variable tag will print out `Peter Jackson`
+Let's say that you have assigned the value `Peter Jackson` to a 'person' variable in your php script. The following 
+variable tag will print out `Peter Jackson`.
 
 ## Filters
 
-Filters are variable modifiers to manipulate or format the value of a variable. 
-A filter usually look like this `{{ person.name|capitalize }}`, a pipe ( | ) 
-character after a variable will apply a filter.
+Filters are variable modifiers that manipulate or format the value of a variable. 
+A filter usually looks like this `{{ person.name|capitalize }}`, a pipe ( | ) 
+character after a variable, plus a filter name, will cause H2O to apply the filter.
 
 __Filter chaining__
 
 ![filter chaining](http://wiki.shopify.com/upload/8/8c/Filterchain.jpg)  
-Let me burrow the image from liquid template
+Let me borrow the image from liquid template
 
 You can chain multiple filters together and use a pipe ( | ) character to separate 
 them. `{{ document.body|escape|nl2br }}`
 
 __Filter arguments__  
-Filters can accept arguments for example `{{ document.description|truncate 20 }}` 
-will display first 20 character of
-document description. Moreover, there are cases you want to pass multiple arguments 
-and you can use comma( , ) to separate them
+Filters can accept arguments. For example `{{ document.description|truncate 20 }}` 
+will display first 20 characters of the document description.
+Moreover, there are cases where you want to pass in multiple arguments. 
+Use commas ( , ) to separate them:
 `{{ person.bio|truncate 20, "..." }}`
 
 __Filter named arguments__  
-h2o uses colon ( : ) to for named arguments to build optional arguments array. 
+h2o uses colons ( : ) for named arguments. These allow you to build 'optional argument' arrays. 
 
 `{{ '/images/logo.png' | image_tag width:450, height:250, alt:"company logo" }}`
 
-and this translate to php will be this and that is pretty much what happen internally
+The above code translated to php will be like the below snippet, which resembles what happens internally:
     
     <?php
         echo image_tag("/image/logo.png", array(
@@ -166,22 +166,22 @@ and this translate to php will be this and that is pretty much what happen inter
     ?>
 
 Note: Difference with Django, Smarty 
-H2o do not use colon ( : ) character to separate arguments for readability reasons, 
-h2o uses comma ( , ) which is more logical.
+H2o does not use the colon ( : ) character to separate arguments for readability reasons, 
+H2o uses the comma ( , ) which is more logical.
 
  
 ## Tag  
 
 `{% tag %}`
 
-Tags are usually very powerful, they controls the logical flow or structure, 
-iteration. there are inline tags `{% inline_tag %}` or tags that requires a 
-close tag. for example: `{% if condition %} ... {% endif %}` 
+Tags are very powerful, as they control the logical flow and structure of a template, 
+There are inline tags `{% inline_tag %}` or tags that requires a 
+close tag. For example: `{% if condition %} ... {% endif %}` 
 
 
 ### if tag
 
-if tag evaluate a variable or a simple expression. when results true the if tag 
+if tags evaluate a variable or a simple expression. when results true the if tag 
 body will be render or else part will be rendered.
     
     {% if person.is_adult %}
