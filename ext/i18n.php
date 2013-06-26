@@ -86,9 +86,7 @@ class Blocktrans_Tag extends H2o_Node {
         # Variable in output
         foreach(array_keys($this->vars) as $var) {
             $object = isset($cache[$var])? $cache[$var]: $context->resolve($var);
-            if (!is_null($object)) {
-                $output = str_replace("%({$var})", $object, $output);
-            }
+            $output = str_replace("%({$var})", $object, $output);
         }
         $context->pop();
         $stream->write($output);
