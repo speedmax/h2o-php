@@ -384,9 +384,9 @@ function templize($source) {
             }
             elseif ($t->type == 'text') {
                 if ($is_plural)
-                    $plurals[] = addslashes($t->content);
+                    $plurals[] = escapesinglequote($t->content);
                 else
-                    $singulars[] = addslashes($t->content);
+                    $singulars[] = escapesinglequote($t->content);
             }
             elseif ($t->type == 'variable') {
                 @list($var, $filters ) = explode('|', $t->content);
@@ -417,5 +417,17 @@ function templize($source) {
     if ($result)
     return "\n".$result . ";\n";
 }
+
+/**
+ * handles only single quote escaping, taking care of double escaping.
+ *
+ * @param $str string value to be escaped
+ *
+ * @return string escaped string value
+ */
+function escapesinglequote($str) {
+    return str_replace('\'', '\\\'', str_replace('\\\'', '\'', $str));
+}
+
 
 ?>
