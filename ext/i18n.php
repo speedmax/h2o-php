@@ -8,7 +8,7 @@ class Trans_Tag extends H2o_Node {
     function __construct($argstring, $parser, $position = 0) {
         $this->text = stripcslashes(substr($argstring, 1, -1));
     }
-    
+
     function render($context, $stream) {
         if ($this->text) {
             $gettext = H2o_I18n::$gettext;
@@ -25,25 +25,25 @@ class Blocktrans_Tag extends H2o_Node {
 
     function __construct($argstring, $parser, $position = 0) {
         # get all aliases alias
-        if (!empty($argstring)) { 
+        if (!empty($argstring)) {
             $arguments = array_map('trim', explode(',', $argstring));
             foreach($arguments as $argument) {
                 if (strpos($argument, '=')) {
                     list($alias, $variable) = explode('=', $argument);
                 } else {
                     $variable = $alias = $argument;
-                }    
+                }
                 $this->aliases[trim($alias)] = H2o_Parser::parseArguments($variable);
             }
         }
 
         # Parse singular and plural block
         $this->singular = $parser->parse('plural', 'endblocktrans');
-        
+
         if ($parser->token->content === 'plural') {
             $this->plural = $parser->parse('endblocktrans');
         }
-        
+
         # compile nodes into string format
         if ($this->singular)
             $this->singular = $this->compile_nodes($this->singular);
@@ -51,7 +51,7 @@ class Blocktrans_Tag extends H2o_Node {
         if ($this->plural)
             $this->plural = $this->compile_nodes($this->plural);
     }
-    
+
     function render($context, $stream) {
         $context->push();
         $this->count = false;
@@ -60,9 +60,9 @@ class Blocktrans_Tag extends H2o_Node {
             $variable = array_shift($data);
             $filters = $data;
             $object = $context->resolve($variable);
-            
+
             if (is_null($object)) continue;
-            
+
             if (!empty($filters))
                 $object = $context->applyFilters($object, $filters);
 
@@ -70,11 +70,11 @@ class Blocktrans_Tag extends H2o_Node {
             if ($this->count === false)
                 $this->count = $object;
         }
-        
+
         # Implicit object count lookup
         if (!is_integer($this->count))
             $this->count = count($this->count);
-            
+
         # Get translation
         $ngettext = H2o_I18n::$ngettext;
         $gettext = H2o_I18n::$gettext;
@@ -91,14 +91,14 @@ class Blocktrans_Tag extends H2o_Node {
         $context->pop();
         $stream->write($output);
     }
-    
+
     function compile_nodes($nodes) {
         $output = array();
         foreach ($nodes as $node) {
             if ($node instanceOf VariableNode) {
-                if (is_sym($node->variable)) 
+                if (is_sym($node->variable))
                     $var = sym_to_str($node->variable);
-                else 
+                else
                     $var = $node->variable;
                 $output[] = "%({$var})";
                 $this->vars[$var] = 1;
@@ -120,7 +120,7 @@ class H2o_I18n {
     var $gettext_setup = false;
     static $gettext = 'gettext';
     static $ngettext = 'ngettext';
-    
+
     function __construct($path, $options = array()) {
         if (is_file($path))
             $path = dirname($path) . DS;
@@ -128,31 +128,31 @@ class H2o_I18n {
         $this->searchpath = realpath($path).DS;
         $this->locale_dir = $this->searchpath .'locale'.DS;
         $this->options = $options;
-        
+
         if (isset($options['tmp_dir']))
             $this->tmp_dir = $options['tmp_dir'];
         else
             $this->tmp_dir = $this->searchpath.'tmp' .DS;
-        
+
         if (isset($options['ext']))
             $this->extensions = $options['ext'];
-            
+
         if (isset($options['charset']))
             $this->charset = $options['charset'];
-            
+
         if (isset($options['locale']) && $options['locale'])
             $this->setLocale($options['locale']);
-        
+
         if (isset($options['extract_message']) && $options['extract_message'])
             $this->extract();
-        
+
         if (isset($options['compile_message']) && $options['compile_message'])
             $this->compile();
-        
+
         if (!is_dir($this->locale_dir) && !mkdir($this->locale_dir))
             throw new Exception('locale directory not found and failed to created '.$this->searchpath);
     }
-    
+
     function gettext($name, $context) {
         $gettext = self::$gettext;
         if (!is_string($name)) return ;
@@ -162,7 +162,7 @@ class H2o_I18n {
             return call_user_func($gettext, $text);
         }
     }
-    
+
     function setupGettext() {
         if (isset($this->options['gettext_path']))
             $this->gettext_path = $this->options['gettext_path'];
@@ -178,10 +178,10 @@ class H2o_I18n {
                 or read instruction here http://docs.djangoproject.com/en/dev/topics/i18n/#gettext-on-windows"
             );
         }
-        
+
         $this->gettext_setup = true;
     }
-    
+
     function extract() {
         if (!$this->gettext_setup)
             $this->setupGettext();
@@ -193,7 +193,7 @@ class H2o_I18n {
         # Get all locales in translation path
         if (!is_dir($this->tmp_dir))
             mkdir($this->tmp_dir);
-        
+
         # foreach locale
         foreach(glob($this->locale_dir.'*') as $dir) {
             if (!is_dir($dir)) continue;
@@ -201,13 +201,13 @@ class H2o_I18n {
             $lc_messages = $dir . DS . 'LC_MESSAGES'. DS;
             $pot_file = $lc_messages."messages.pot";
             $po_file = $lc_messages."messages.po";
-    
+
             if (!is_dir($lc_messages))
                 mkdir($lc_messages);
-            
+
             if (is_file($pot_file))
                 unlink($pot_file);
-            
+
             # Compile messages into php file
             $sourcecode = array();
             foreach ($templates as $file) {
@@ -223,8 +223,8 @@ class H2o_I18n {
             # run xgettext to extract all translation string
             $return = '';
             $extra_arg = '';
-            if (is_file($pot_file)) 
-                $extra_arg = "--omit-header"; 
+            if (is_file($pot_file))
+                $extra_arg = "--omit-header";
 
             $cmd = "{$this->gettext_path}xgettext -L PHP {$extra_arg} --from-code UTF-8 -o - \"{$compiled_file}\"";
             if (!exec($cmd, $return)){
@@ -242,15 +242,15 @@ class H2o_I18n {
             $return = join("\n", $return);
             $return = str_replace(array_keys($replace), $replace , $return ."\n");
             file_put_contents($pot_file, $return, FILE_APPEND);
-            
+
             # merge messages for each language
             if (is_file($pot_file)) {
                 $return = $error = '';
                 $cmd = $this->gettext_path."msguniq --to-code=utf-8 \"{$pot_file}\"";
-                
+
                 if (!exec($cmd, $return))
                     throw new Exception('Msgunique failed');
-                
+
                 file_put_contents($pot_file, join("\n", $return));
                 if (is_file($po_file) && trim(file_get_contents($po_file)) !== '') {
                     $return = '';
@@ -270,27 +270,27 @@ class H2o_I18n {
     function compile() {
         if (!$this->gettext_setup)
             $this->setupGettext();
-        
+
         foreach(glob($this->locale_dir.'*') as $dir) {
           if (!is_dir($dir)) continue;
           $locale = basename($dir);
           $lc_messages = $dir.DS.'LC_MESSAGES'.DS;
           $po_file = $lc_messages."messages.po";
           $mo_file = $lc_messages."messages.mo";
-    
+
           if (!is_dir($lc_messages))
               mkdir($lc_messages);
-    
+
           $cmd = $this->gettext_path."msgfmt --check-format -o {$mo_file} {$po_file}";
           exec($cmd, $return);
       }
     }
-    
+
     function setLocale($locale, $charset = null) {
         $this->locale = $locale;
         if (!$charset)
             $charset = $this->charset;
-        
+
         putenv("LC_ALL={$locale}");
         setlocale(LC_ALL, $locale);
         if (!is_dir($this->locale_dir))
@@ -299,7 +299,7 @@ class H2o_I18n {
         bind_textdomain_codeset('messages', $charset);
         textdomain("messages");
     }
-    
+
     function getPluralForm($locale = 'en') {
         $default= array("2", "(n != 1)");
         $default_locale = array(
@@ -319,12 +319,12 @@ class H2o_I18n {
         }
         return $default;
     }
-    
+
     function getTemplates($path, $exts, $exclude = array()) {
         $results = array();
         foreach(new DirectoryIterator($path) as $f) {
             if ($f->isDot()) continue;
-    
+
             if ($f->isFile()) {
                 $ext = end(explode(".", $f->getFilename()));
                 if ($ext && in_array($ext, $exts) ) {
@@ -350,34 +350,34 @@ function templize($source) {
     $var_re = '{
         _\(
             (
-            "[^"\\\\]*(?:\\\\.[^"\\\\]*)*" |   # Double Quote string   
+            "[^"\\\\]*(?:\\\\.[^"\\\\]*)*" |   # Double Quote string
             \'[^\'\\\\]*(?:\\\\.[^\'\\\\]*)*\' # Single Quote String
             )
         \)
     }x';
-    
+
     $lexer = new H2o_Lexer(h2o::getOptions());
     $tokenstream = $lexer->tokenize($source);
-    
+
     $in_block = false;
     $is_plural = false;
-    
+
     $singulars = array();
     $plurals = array();
-    
+
     while($t = $tokenstream->next()) {
         if ($in_block) {
             if ($t->type == 'block' && $t->content == 'endblocktrans') {
                 if ($is_plural) {
                     $output[] = sprintf(
                         " ngettext('%s', '%s', \$count)", join('', $singulars), join('', $plurals)
-                    ); 
+                    );
                 } else {
-                    $output[] = sprintf(" gettext('%s')", join('', $singulars)); 
+                    $output[] = sprintf(" gettext('%s')", join('', $singulars));
                 }
                 $singulars = $plurals = array();
                 $in_block = $is_plural = false ;
-            } 
+            }
             elseif ($t->type == 'block' && $t->content == 'plural') {
                 $is_plural = true;
             }
@@ -404,7 +404,7 @@ function templize($source) {
                 }
                 elseif (preg_match($block_re, $t->content, $matches)) {
                     $in_block = true;
-                } 
+                }
             } elseif ($t->type == 'variable') {
                 if (preg_match($var_re, $t->content, $matches)) {
                     $output[] = sprintf(" gettext(%s)", ($matches[1]));
