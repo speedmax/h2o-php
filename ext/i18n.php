@@ -153,7 +153,7 @@ class H2o_I18n {
             throw new Exception('locale directory not found and failed to created '.$this->searchpath);
     }
 
-    function gettext($name, $context) {
+    static function gettext($name, $context) {
         $gettext = self::$gettext;
         if (!is_string($name)) return ;
         $syntax = '/_\(((?:".*?")|(?:\'.*?\'))\)/';
