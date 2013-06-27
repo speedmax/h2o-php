@@ -326,7 +326,8 @@ class H2o_I18n {
             if ($f->isDot()) continue;
 
             if ($f->isFile()) {
-                $ext = end(explode(".", $f->getFilename()));
+                $tmp = explode(".", $f->getFilename());
+                $ext = end($tmp);
                 if ($ext && in_array($ext, $exts) ) {
                     $results[] = $f->getPathname();
                 }
