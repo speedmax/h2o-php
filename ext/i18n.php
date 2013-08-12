@@ -246,7 +246,7 @@ class H2o_I18n {
             # merge messages for each language
             if (is_file($pot_file)) {
                 $return = $error = '';
-                $cmd = $this->gettext_path."msguniq --to-code=utf-8 \"{$pot_file}\"";
+                $cmd = $this->gettext_path."msguniq --no-wrap --no-location --to-code=utf-8 \"{$pot_file}\"";
 
                 if (!exec($cmd, $return))
                     throw new Exception('Msgunique failed');
