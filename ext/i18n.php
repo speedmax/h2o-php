@@ -89,6 +89,8 @@ class Blocktrans_Tag extends H2o_Node {
             $output = str_replace("%({$var})", $object, $output);
         }
         $context->pop();
+
+
         $stream->write($output);
     }
 
@@ -226,7 +228,7 @@ class H2o_I18n {
             if (is_file($pot_file))
                 $extra_arg = "--omit-header";
 
-            $cmd = "{$this->gettext_path}xgettext -L PHP {$extra_arg} --from-code UTF-8 -o - \"{$compiled_file}\"";
+            $cmd = "{$this->gettext_path}xgettext  --no-wrap --no-location -L PHP {$extra_arg} --from-code UTF-8 -o - \"{$compiled_file}\"";
             if (!exec($cmd, $return)){
                 throw new Exception('Failed to parse template file');
             }
@@ -251,10 +253,20 @@ class H2o_I18n {
                 if (!exec($cmd, $return))
                     throw new Exception('Msgunique failed');
 
+                // remove POT creation date (annoying as appears in diff every reprocess)
+                $return2 = array();
+                foreach($return as $line) {
+                    if (substr($line, 0, 19) == '"POT-Creation-Date:')
+                        continue;
+                    $return2[] = $line;
+                }
+                $return = $return2;
+
                 file_put_contents($pot_file, join("\n", $return));
+
                 if (is_file($po_file) && trim(file_get_contents($po_file)) !== '') {
                     $return = '';
-                    $cmd = sprintf($this->gettext_path.'msgmerge -q "%s" "%s"', $po_file, $pot_file);
+                    $cmd = sprintf($this->gettext_path.'msgmerge --no-wrap --no-wrap -q "%s" "%s"', $po_file, $pot_file);
                     exec($cmd, $return);
                     file_put_contents($po_file, join("\n", $return));
                 } else {
@@ -369,6 +381,7 @@ function templize($source) {
     while($t = $tokenstream->next()) {
         if ($in_block) {
             if ($t->type == 'block' && $t->content == 'endblocktrans') {
+
                 if ($is_plural) {
                     $output[] = sprintf(
                         " ngettext('%s', '%s', \$count)", join('', $singulars), join('', $plurals)
