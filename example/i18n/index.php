@@ -6,7 +6,7 @@ $template = new H2o('trans.html', array(
     'i18n' => array(
         'locale' => isset($_GET['lang']) ? $_GET['lang'] : false,
         'charset' => 'UTF-8',
-        'gettext_path' => '../bin/gettext/bin/',
+        'gettext_path' => (strtoupper(PHP_OS) == 'LINUX' ? '/usr/bin/' : '../bin/gettext/bin/'),
         'extract_message' => true,
         'compile_message' => true,
     )
@@ -16,7 +16,7 @@ $template = new H2o('trans.html', array(
 
 
 $time_start = microtime(true);
-
+     
 echo $template->render(array(
     'users' => array(
         array(
@@ -38,6 +38,11 @@ echo $template->render(array(
             'username' =>           'foobar',
             'tasks' => array(),
             'user_id' =>            4
+        ),
+        array(
+            'username' =>           'test',
+            'tasks' => null,
+            'user_id' =>            5
         )
     )
 ));
