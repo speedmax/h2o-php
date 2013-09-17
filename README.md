@@ -412,7 +412,7 @@ are careful, and perhaps a bit inventive, it won't hinder you terribly much.
 
 Contributors
 ---
-  
+  - Taylor Luk - Founder of [Issue publishing](http://issueapp.com)
   - jlogsdon - Major refactoring (wip) and bug fixes
   - cyberklin - Added filter support for any context resolve
   - idlesign - Added if_changed tag support
